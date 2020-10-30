@@ -1,0 +1,8 @@
+<p>Hello {{PERSON_NAME}},</p>
+
+<p>Please find below a summary of the blocked emails for your account {{PERSON_EMAIL}} ({{initial_date}} => {{final_date}})
+(and that not have been unlocked yet.).</p>
+
+{% for mail in mails %}
+    <p>{{mail.email_sender}} | {{mail.email_subject}}</p>
+{% endfor %}

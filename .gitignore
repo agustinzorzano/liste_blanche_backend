@@ -1,0 +1,8 @@
+.idea/
+venv/
+/migrations
+*.pyc
+*.pyo
+.env
+.DS_Store
+usernames.txt

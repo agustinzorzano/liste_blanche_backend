@@ -1,0 +1,15 @@
+Hello, this is ${PERSON_NAME},
+
+To cope with ever increasing amounts of spam mail, we have subscribed to a filter service.
+This service blocks all emails with the exception of trusted correspondents.
+
+So I have not yet received your last email,
+In order to prove you are a genuine sender and not a spam-sending machine, please click below and follow the instructions on the page which opens.
+
+<Button>
+
+You will then be immediately and permanently added to my list of trusted correspondants.
+Your last email will also be delivered without delay.
+
+Thanks in advance!
+${PERSON_NAME}

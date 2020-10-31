@@ -34,3 +34,23 @@ The user_email must be save in the database
 ```terminal
 python email_scan.py <user_email>
 ```
+
+### crontab setup
+In the crontab we have to define the processes we want to run and when we want to run them. In the crontab we are going to define:
+```terminal
+# Environment variables
+PROJECT_VIRTUAL_ENVIRONMENT_PATH=<path to the activation of the virtual environment. Ex: /home/venv/bin/activate>
+PROJECT_USERNAMES_PATH=<path to the file with the emails>
+PROJECT_EMAIL_SCAN_PATH=<path email_scan.py>
+PROJECT_SUMMARY_PATH=<path to summary.py>
+
+# Processes
+0,5,10,15,20,25,30,35,40,45,50,55 * * * * /bin/bash <path to email_scan.sh> > <path to a log file> 2>&1
+
+
+0 0 * * * /bin/bash <path to summary.sh> > <path to a log file> 2>&1
+```
+
+The first part defines some environment variables which are going to be used in the scripts. The usernames file is a file
+which has all the emails of the users, one email per line. The processes define the time they are going to be executed and
+what they are going to execute. The first one is executed each 5 minutes. The second one, is executed at 00:00 everyday.

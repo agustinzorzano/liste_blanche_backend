@@ -70,10 +70,15 @@ def main():
     mailbox.select('inbox')
     white_list = WhiteList.query.filter(WhiteList.fk_user == user.id).all()
     white_list = [mail.email for mail in white_list]
-    unseen_emails = mailbox.search_unseen()[1][0].decode().split()
-    seen_emails = mailbox.search_seen()[1][0].decode().split()
+    unseen_emails = mailbox.search_unseen(user.last_uid_scanned)
+    seen_emails = mailbox.search_seen(user.last_uid_scanned)
     analyse_mails(mailbox, smtp_sender, white_list, seen_emails, False, user)
     analyse_mails(mailbox, smtp_sender, white_list, unseen_emails, True, user)
+    mails_scanned = len(unseen_emails) + len(seen_emails) - 1
+    if mails_scanned < 0:
+        mails_scanned = 0
+    user.last_uid_scanned += mails_scanned
+    db.session.commit()
 
 
 main()

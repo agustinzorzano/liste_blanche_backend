@@ -31,14 +31,19 @@ class Imap:
         typ, data = self.mail.fetch(email_id.encode(), '(BODY[HEADER.FIELDS (From)])')
         return email.message_from_string(data[0][1].decode())['from']
 
-    def search_unseen(self):
-        return self.mail.search(None, '(UNSEEN)')
+    def _search(self, flags, initial_uid=1):
+        return self.mail.search(None, '({} UID {}:*)'.format(flags, initial_uid))[1][0].decode().split()
 
-    def search_seen(self):
-        return self.mail.search(None, 'SEEN')
+    def search_unseen(self, initial_uid=1):
+        return self._search('UNSEEN', initial_uid)
+        # return self.mail.search(None, '(UNSEEN UID {}:*)'.format(initial_uid))[1][0].decode().split()
+
+    def search_seen(self, initial_uid=1):
+        return self._search('SEEN', initial_uid)
+        # return self.mail.search(None, '(SEEN UID {}:*)'.format(initial_uid))[1][0].decode().split()
 
     def search_all(self):
-        return self.mail.search(None, '(all)')
+        return self._search('all')
 
     def mark_as_unseen(self, email_ids):
         if type(email_ids) != list:

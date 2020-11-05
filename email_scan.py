@@ -83,8 +83,8 @@ def main():
     white_list = [mail.email for mail in white_list]
 
     # We get all the unseen and seen emails whose uid is greater than last_uid_scanned
-    unseen_emails = mailbox.search_unseen(user.last_uid_scanned)
-    seen_emails = mailbox.search_seen(user.last_uid_scanned)
+    unseen_emails = mailbox.search_unseen(user.created_at, user.last_uid_scanned)
+    seen_emails = mailbox.search_seen(user.created_at, user.last_uid_scanned)
     analyse_mails(mailbox, smtp_sender, white_list, seen_emails, False, user)
     analyse_mails(mailbox, smtp_sender, white_list, unseen_emails, True, user)
     mails_scanned = len(unseen_emails) + len(seen_emails) - 1

@@ -9,6 +9,7 @@ class User(db.Model):
     email_password = db.Column(db.String(255))
     password = db.Column(db.String(255))
     last_uid_scanned = db.Column(db.Integer, default=1)
+    created_at = db.Column(db.DateTime, server_default=db.func.now(), default=db.func.now())
 
     def __repr__(self):
         return '<User {}>'.format(self.username)

@@ -35,25 +35,25 @@ class Imap:
         typ, data = self.mail.fetch(email_id.encode(), '(BODY[HEADER.FIELDS (From)])')
         return email.message_from_string(data[0][1].decode())['from']
 
-    def _search(self, flags, initial_uid=1):
+    def _search(self, flags, since_date, initial_uid=1):
         """Returns a list with the emails whose uid is greater than initial_uid"""
-        return self.mail.search(None, '({} UID {}:*)'.format(flags, initial_uid))[1][0].decode().split()
+        return self.mail.search(None, '({} SINCE {} UID {}:*)'.format(flags, since_date.strftime("%d-%b-%Y"), initial_uid))[1][0].decode().split()
 
-    def search_unseen(self, initial_uid=1):
+    def search_unseen(self, since_date, initial_uid=1):
         """Returns a list with the unseen emails whose uid is greater than initial_uid"""
-        return self._search('UNSEEN', initial_uid)
+        return self._search('UNSEEN', since_date, initial_uid)
         # return self.mail.search(None, '(UNSEEN UID {}:*)'.format(initial_uid))[1][0].decode().split()
 
-    def search_seen(self, initial_uid=1):
+    def search_seen(self, since_date, initial_uid=1):
         """Returns a list with the seen emails whose uid is greater than initial_uid"""
-        return self._search('SEEN', initial_uid)
+        return self._search('SEEN', since_date, initial_uid)
         # return self.mail.search(None, '(SEEN UID {}:*)'.format(initial_uid))[1][0].decode().split()
 
-    def search_all(self):
-        return self._search('all')
+    def search_all(self, since_date):
+        return self._search('all', since_date)
 
     def mark_as_unseen(self, email_ids):
-        """It marks an email as unseen"""
+        """It marks an email or a list of emails as unseen"""
         if type(email_ids) != list:
             email_ids = [email_ids]
         for mail in email_ids:

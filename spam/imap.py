@@ -36,21 +36,36 @@ class Imap:
         return email.message_from_string(data[0][1].decode())['from']
 
     def _search(self, flags, since_date, initial_uid=1):
-        """Returns a list with the emails whose uid is greater than initial_uid"""
+        """Returns a list with the emails whose uid is greater than initial_uid and were received after the date since_date"""
         return self.mail.search(None, '({} SINCE {} UID {}:*)'.format(flags, since_date.strftime("%d-%b-%Y"), initial_uid))[1][0].decode().split()
 
     def search_unseen(self, since_date, initial_uid=1):
-        """Returns a list with the unseen emails whose uid is greater than initial_uid"""
+        """Returns a list with the unseen emails whose uid is greater than initial_uid and
+        were received after the date since_date"""
         return self._search('UNSEEN', since_date, initial_uid)
         # return self.mail.search(None, '(UNSEEN UID {}:*)'.format(initial_uid))[1][0].decode().split()
 
     def search_seen(self, since_date, initial_uid=1):
-        """Returns a list with the seen emails whose uid is greater than initial_uid"""
+        """Returns a list with the seen emails whose uid is greater than initial_uid and
+        were received after the date since_date"""
         return self._search('SEEN', since_date, initial_uid)
         # return self.mail.search(None, '(SEEN UID {}:*)'.format(initial_uid))[1][0].decode().split()
 
-    def search_all(self, since_date):
-        return self._search('all', since_date)
+    def search_all(self, since_date, initial_uid=1):
+        """Returns a list with all the emails whose uid is greater than initial_uid and
+        were received after the date since_date"""
+        return self._search('all', since_date, initial_uid)
+
+    def get_last_uid(self, since_date, last_scanned_id, initial_uid=1):
+        """It increases the initial_uid until it only receives one email in the search_all. It returns the initial_uid
+        with the updated value"""
+        length = 2
+        while length > 1:
+            mails = self.search_all(since_date, initial_uid)
+            mails = [mail for mail in mails if int(mail) <= last_scanned_id]
+            initial_uid += len(mails) - 1
+            length = len(mails)
+        return initial_uid
 
     def mark_as_unseen(self, email_ids):
         """It marks an email or a list of emails as unseen"""

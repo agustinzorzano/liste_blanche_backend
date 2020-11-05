@@ -9,5 +9,7 @@ env = Environment(loader=FileSystemLoader(TEMPLATE_PATH))
 class MessageCreator:
     @staticmethod
     def create_message_template(path, parameters):
+        """It returns a template created by the template file (path) and the subtitution of the parameters
+        in the template"""
         message = env.get_template(path)
         return message.render(parameters)

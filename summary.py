@@ -19,6 +19,7 @@ def main():
         return
     today = datetime.date.today()
     initial_date = today + datetime.timedelta(-1)
+    # We get the all emails received since yesterday that are in the quarantine
     mails = Quarantine.query.filter(Quarantine.fk_user == user.id, Quarantine.created_at >= initial_date).all()
     initial_date = initial_date.strftime("%d/%m/%Y %H:%M")
     final_date = today.strftime("%d/%m/%Y %H:%M")
@@ -28,9 +29,9 @@ def main():
     smtp_sender = Smtp(os.getenv('EMAIL_HOST'))
     if not smtp_sender.login(email_sender, password):
         return
+    # We set the parameters needed in the email template
     parameters = {'PERSON_NAME': user.full_name, 'PERSON_EMAIL': user.email, 'mails': mails,
-                  'initial_date': initial_date,
-                  'final_date': final_date}
+                  'initial_date': initial_date, 'final_date': final_date}
     message = MessageCreator.create_message_template(TEMPLATE_NAME, parameters)
 
     smtp_sender.send_message(email_sender, user_email, "Summary {}".format(final_date), message)

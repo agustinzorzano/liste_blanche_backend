@@ -11,6 +11,7 @@ class Imap:
         logging.info("Connection accomplished")
 
     def login(self, user_email, password):
+        """Tries to log in. Returns True if it succeeds"""
         try:
             self.mail.login(user_email, password)
             return True
@@ -21,24 +22,30 @@ class Imap:
         return self.mail.list()
 
     def select(self, folder='inbox'):
+        """Selects the current mailbox folder"""
         self.mail.select(folder)
 
     def get_mail(self, email_id):
+        """Returns the email content of the email with the id email_id"""
         typ, data = self.mail.fetch(email_id.encode(), '(RFC822)')
         return Email(data)
 
     def get_sender(self, email_id):
+        """Returns the sender of the email with the id email_id"""
         typ, data = self.mail.fetch(email_id.encode(), '(BODY[HEADER.FIELDS (From)])')
         return email.message_from_string(data[0][1].decode())['from']
 
     def _search(self, flags, initial_uid=1):
+        """Returns a list with the emails whose uid is greater than initial_uid"""
         return self.mail.search(None, '({} UID {}:*)'.format(flags, initial_uid))[1][0].decode().split()
 
     def search_unseen(self, initial_uid=1):
+        """Returns a list with the unseen emails whose uid is greater than initial_uid"""
         return self._search('UNSEEN', initial_uid)
         # return self.mail.search(None, '(UNSEEN UID {}:*)'.format(initial_uid))[1][0].decode().split()
 
     def search_seen(self, initial_uid=1):
+        """Returns a list with the seen emails whose uid is greater than initial_uid"""
         return self._search('SEEN', initial_uid)
         # return self.mail.search(None, '(SEEN UID {}:*)'.format(initial_uid))[1][0].decode().split()
 
@@ -46,6 +53,7 @@ class Imap:
         return self._search('all')
 
     def mark_as_unseen(self, email_ids):
+        """It marks an email as unseen"""
         if type(email_ids) != list:
             email_ids = [email_ids]
         for mail in email_ids:
@@ -53,6 +61,7 @@ class Imap:
         self.mail.expunge()
 
     def delete(self, email_ids):
+        """Deletes an email from the mailbox"""
         if type(email_ids) != list:
             email_ids = [email_ids]
         for mail in email_ids:

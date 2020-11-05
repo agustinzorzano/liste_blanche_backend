@@ -34,4 +34,4 @@ class Quarantine(db.Model):
     email_subject = db.Column(db.String(120))
     email_size = db.Column(db.Integer)
     email_id = db.Column(db.String(120))
-    created_at = db.Column(db.DateTime, server_default=db.func.now())
+    created_at = db.Column(db.DateTime, server_default=db.func.now(), default=db.func.now())

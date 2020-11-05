@@ -15,6 +15,12 @@ TEMPLATE_NAME = 'captcha_email.html'
 
 
 def analyse_mails(mailbox, smtp_sender, white_list, mails, is_unseen, user):
+    """It checks the sender for each email from the list. If the sender is not in the white list it will do one of the
+    following actions:
+        - If the email is in the black list, it will delete it from the mailbox.
+        - If the email is not in the black list, it will delete from the mailbox, save it in a repository as an .eml file,
+          save some specific data in the database and send an email to the sender with the captcha.
+    """
     emails_in_quarantine = Quarantine.query.filter(Quarantine.fk_user == user.id).with_entities(Quarantine.email_id).all()
     emails_in_quarantine = [mail[0] for mail in emails_in_quarantine]
     parameters = {'PERSON_NAME': user.full_name.title()}
@@ -22,12 +28,14 @@ def analyse_mails(mailbox, smtp_sender, white_list, mails, is_unseen, user):
         sender = mailbox.get_sender(mail)
         sender = sender.strip('>').split('<')[-1]
         if sender not in white_list:
+            # TODO: check if the sender is in the black list
+            # We get all the content of the email
             message = mailbox.get_mail(mail)
             if message.message_id() in emails_in_quarantine:  # TODO: delete this if
                 print("(Provisional) Message already in quarantine")
                 continue
             path = os.path.join(BASE_PATH, user.email, message.message_id() + '.eml')
-            # we save the email in the directory
+            # we save the email in the repository
             size = message.save(path)
             logging.info('Message from {} with id {} and size {}, was deleted and saved in {}\n'.format(sender, message.message_id(), size, path))
             # mailbox.delete(mail)
@@ -40,15 +48,18 @@ def analyse_mails(mailbox, smtp_sender, white_list, mails, is_unseen, user):
             smtp_sender.send_message(user.email, sender, 'RE: ' + message.subject(),
                                      MessageCreator.create_message_template(TEMPLATE_NAME, parameters))
         elif is_unseen:
+            # We mark the email as unseen since the user has not read it yet
             mailbox.mark_as_unseen(mail)
 
 
 def get_imap_server(user_email):
+    """Returns the IMAP server depending on the email"""
     servers = {'gmx.com': 'imap.gmx.com', 'gmail.com': 'imap.gmail.com'}
     return servers[user_email.split('@')[1]]
 
 
 def get_smtp_server(user_email):
+    """Returns the SMTP server depending on the email"""
     servers = {'gmx.com': 'mail.gmx.com', 'gmail.com': 'smtp.gmail.com'}
     return servers[user_email.split('@')[1]]
 
@@ -70,6 +81,8 @@ def main():
     mailbox.select('inbox')
     white_list = WhiteList.query.filter(WhiteList.fk_user == user.id).all()
     white_list = [mail.email for mail in white_list]
+
+    # We get all the unseen and seen emails whose uid is greater than last_uid_scanned
     unseen_emails = mailbox.search_unseen(user.last_uid_scanned)
     seen_emails = mailbox.search_seen(user.last_uid_scanned)
     analyse_mails(mailbox, smtp_sender, white_list, seen_emails, False, user)

@@ -27,17 +27,20 @@ class Imap:
 
     def get_mail(self, email_id):
         """Returns the email content of the email with the id email_id"""
-        typ, data = self.mail.fetch(email_id.encode(), '(RFC822)')
+        # typ, data = self.mail.fetch(email_id.encode(), '(RFC822)')
+        typ, data = self.mail.uid("fetch", email_id, '(RFC822)')
         return Email(data)
 
     def get_sender(self, email_id):
         """Returns the sender of the email with the id email_id"""
-        typ, data = self.mail.fetch(email_id.encode(), '(BODY[HEADER.FIELDS (From)])')
+        # typ, data = self.mail.fetch(email_id.encode(), '(BODY[HEADER.FIELDS (From)])')
+        typ, data = self.mail.uid("fetch", email_id, '(BODY[HEADER.FIELDS (From)])')
         return email.message_from_string(data[0][1].decode())['from']
 
     def _search(self, flags, since_date, initial_uid=1):
         """Returns a list with the emails whose uid is greater than initial_uid and were received after the date since_date"""
-        return self.mail.search(None, '({} SINCE {} UID {}:*)'.format(flags, since_date.strftime("%d-%b-%Y"), initial_uid))[1][0].decode().split()
+        # return self.mail.search(None, '({} SINCE {} UID {}:*)'.format(flags, since_date.strftime("%d-%b-%Y"), initial_uid))[1][0].decode().split()
+        return self.mail.uid("search", None, f'({flags} SINCE {since_date.strftime("%d-%b-%Y")} UID { initial_uid}:*)')[1][0].decode().split()
 
     def search_unseen(self, since_date, initial_uid=1):
         """Returns a list with the unseen emails whose uid is greater than initial_uid and
@@ -56,23 +59,12 @@ class Imap:
         were received after the date since_date"""
         return self._search('all', since_date, initial_uid)
 
-    def get_last_uid(self, since_date, last_scanned_id, initial_uid=1):
-        """It increases the initial_uid until it only receives one email in the search_all. It returns the initial_uid
-        with the updated value"""
-        length = 2
-        while length > 1:
-            mails = self.search_all(since_date, initial_uid)
-            mails = [mail for mail in mails if int(mail) <= last_scanned_id]
-            initial_uid += len(mails) - 1
-            length = len(mails)
-        return initial_uid
-
     def mark_as_unseen(self, email_ids):
         """It marks an email or a list of emails as unseen"""
         if type(email_ids) != list:
             email_ids = [email_ids]
         for mail in email_ids:
-            self.mail.store(mail, '-FLAGS', '(\\Seen)')
+            self.mail.uid("store", mail, '-FLAGS', '(\\Seen)')
         self.mail.expunge()
 
     def delete(self, email_ids):
@@ -80,5 +72,5 @@ class Imap:
         if type(email_ids) != list:
             email_ids = [email_ids]
         for mail in email_ids:
-            self.mail.store(mail, '+FLAGS', '\\Deleted')
+            self.mail.uid("store", mail, '+FLAGS', '\\Deleted')
         self.mail.expunge()

@@ -85,16 +85,22 @@ def main():
     # We get all the unseen and seen emails whose uid is greater than last_uid_scanned
     unseen_emails = mailbox.search_unseen(user.created_at, user.last_uid_scanned)
     seen_emails = mailbox.search_seen(user.created_at, user.last_uid_scanned)
+
+    # We ignore the last scanned mail only if we already have scanned the first email
+    if user.last_uid_scanned > 1:
+        if unseen_emails[0::-1] == [str(user.last_uid_scanned)]:
+            unseen_emails.pop(0)
+        if seen_emails[0::-1] == [str(user.last_uid_scanned)]:
+            seen_emails.pop(0)
+
     analyse_mails(mailbox, smtp_sender, white_list, seen_emails, False, user)
     analyse_mails(mailbox, smtp_sender, white_list, unseen_emails, True, user)
-    mails_scanned = len(unseen_emails) + len(seen_emails) - 1
-    # if mails_scanned < 0:
-    #     mails_scanned = 0
-    # We move until we achieve the last id
+    mails_scanned = len(unseen_emails) + len(seen_emails)
+
     if mails_scanned > 0:
         # we get the greatest uid scanned
         last_scanned_id = max([int(i) for i in (unseen_emails[-1:] or [0]) + (seen_emails[-1:] or [0])])
-        user.last_uid_scanned = mailbox.get_last_uid(user.created_at, int(last_scanned_id), user.last_uid_scanned + mails_scanned)
+        user.last_uid_scanned = last_scanned_id
         db.session.commit()
     # user.last_uid_scanned += mails_scanned
     # db.session.commit()

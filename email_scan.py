@@ -82,16 +82,20 @@ def main():
     white_list = WhiteList.query.filter(WhiteList.fk_user == user.id).all()
     white_list = [mail.email for mail in white_list]
 
-    # We get all the unseen and seen emails whose uid is greater than last_uid_scanned
-    unseen_emails = mailbox.search_unseen(user.created_at, user.last_uid_scanned)
-    seen_emails = mailbox.search_seen(user.created_at, user.last_uid_scanned)
+    last_uid = user.last_uid_scanned
+    if last_uid == 0:
+        # The mailbox has never been scanned
+        last_uid = 1
 
-    # We ignore the last scanned mail only if we already have scanned the first email
-    if user.last_uid_scanned > 1:
-        if unseen_emails[0::-1] == [str(user.last_uid_scanned)]:
-            unseen_emails.pop(0)
-        if seen_emails[0::-1] == [str(user.last_uid_scanned)]:
-            seen_emails.pop(0)
+    # We get all the unseen and seen emails whose uid is greater than last_uid_scanned
+    unseen_emails = mailbox.search_unseen(user.created_at, last_uid)
+    seen_emails = mailbox.search_seen(user.created_at, last_uid)
+
+    # We ignore the last scanned mail
+    if unseen_emails[0::-1] == [str(user.last_uid_scanned)]:
+        unseen_emails.pop(0)
+    if seen_emails[0::-1] == [str(user.last_uid_scanned)]:
+        seen_emails.pop(0)
 
     analyse_mails(mailbox, smtp_sender, white_list, seen_emails, False, user)
     analyse_mails(mailbox, smtp_sender, white_list, unseen_emails, True, user)

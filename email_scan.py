@@ -107,3 +107,11 @@ def main():
 
 
 main()
+
+
+# from spam.email import Email
+# file = open("<path>")
+# m = Email(file)
+# mailbox.append(m)
+# file.close()
+# return

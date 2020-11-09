@@ -1,12 +1,15 @@
 from email.message import Message
 from email import generator
 import email
+import io
 
 
 class Email:
     def __init__(self, data):
         if type(data) == Message:
             self.email = data
+        elif type(data) == io.TextIOWrapper:
+            self.email = email.message_from_file(data)
         else:
             self.email = email.message_from_string(data[0][1].decode())
 
@@ -44,3 +47,11 @@ class Email:
             gen.flatten(self.email)
             size = outfile.tell()
         return size
+
+    def reset_date(self):
+        """Deletes the reception date from the email"""
+        del self.email["date"]
+
+    def str(self):
+        """Return the email in string format"""
+        return str(self.email)

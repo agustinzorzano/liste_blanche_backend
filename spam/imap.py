@@ -1,6 +1,7 @@
 import imaplib
 import email
 import logging
+import time
 from spam.email import Email
 
 
@@ -74,3 +75,10 @@ class Imap:
         for mail in email_ids:
             self.mail.uid("store", mail, '+FLAGS', '\\Deleted')
         self.mail.expunge()
+
+    def append(self, message):
+        """Adds an email to the mailbox"""
+        # We reset the date so that the reception date appears as the current date
+        # TODO: confirm the reset date
+        message.reset_date()
+        self.mail.append("INBOX", "", imaplib.Time2Internaldate(time.time()), message.str().encode('utf-8'))

@@ -41,7 +41,7 @@ class Imap:
     def _search(self, flags, since_date, initial_uid=1):
         """Returns a list with the emails whose uid is greater than initial_uid and were received after the date since_date"""
         # return self.mail.search(None, '({} SINCE {} UID {}:*)'.format(flags, since_date.strftime("%d-%b-%Y"), initial_uid))[1][0].decode().split()
-        return self.mail.uid("search", None, f'({flags} SINCE {since_date.strftime("%d-%b-%Y")} UID { initial_uid}:*)')[1][0].decode().split()
+        return self.mail.uid("search", None, f'({flags} SINCE {since_date.strftime("%d-%b-%Y")} UID {initial_uid}:*)')[1][0].decode().split()
 
     def search_unseen(self, since_date, initial_uid=1):
         """Returns a list with the unseen emails whose uid is greater than initial_uid and

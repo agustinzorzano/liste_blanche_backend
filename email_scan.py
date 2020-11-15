@@ -5,6 +5,7 @@ from spam import db
 from spam.imap import Imap
 from spam.models import User, WhiteList, Quarantine
 from spam.smtp import Smtp
+from spam.email import Email
 from spam.message_creator import MessageCreator
 from dotenv import load_dotenv
 load_dotenv()
@@ -33,6 +34,7 @@ def analyse_mails(mailbox, smtp_sender, white_list, mails, is_unseen, user):
             message = mailbox.get_mail(mail)
             if message.message_id() in emails_in_quarantine:  # TODO: delete this if
                 print("(Provisional) Message already in quarantine")
+                # mailbox.mark_as_unseen(mail)
                 continue
             path = os.path.join(BASE_PATH, user.email, message.message_id() + '.eml')
             # we save the email in the repository
@@ -62,6 +64,24 @@ def get_smtp_server(user_email):
     """Returns the SMTP server depending on the email"""
     servers = {'gmx.com': 'mail.gmx.com', 'gmail.com': 'smtp.gmail.com'}
     return servers[user_email.split('@')[1]]
+
+
+def restore_emails(mailbox, user):
+    """Restores the emails that need to be restored"""
+    mails_to_restore = Quarantine.query.filter(Quarantine.fk_user == user.id,
+                                               Quarantine.to_restore == True,
+                                               Quarantine.was_restored == False).all()
+    for mail in mails_to_restore:
+        path = os.path.join(BASE_PATH, user.email, mail.email_id + '.eml')
+        if os.path.exists(path):
+            file = open(path)
+            message = Email(file)
+            mailbox.append(message)
+            file.close()
+            os.remove(path)
+            mail.was_restored = True
+    if mails_to_restore:
+        db.session.commit()
 
 
 def main():
@@ -108,6 +128,9 @@ def main():
         db.session.commit()
     # user.last_uid_scanned += mails_scanned
     # db.session.commit()
+
+    # We restore the emails that need to be restored
+    restore_emails(mailbox, user)
 
 
 main()

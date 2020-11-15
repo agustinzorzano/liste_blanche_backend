@@ -1,4 +1,5 @@
 from spam import db
+from sqlalchemy import text
 
 
 class User(db.Model):
@@ -8,7 +9,7 @@ class User(db.Model):
     email = db.Column(db.String(120), index=True, unique=True)
     email_password = db.Column(db.String(255))
     password = db.Column(db.String(255))
-    last_uid_scanned = db.Column(db.Integer, default=0)
+    last_uid_scanned = db.Column(db.Integer, default=0, server_default=text("0"))
     created_at = db.Column(db.DateTime, server_default=db.func.now(), default=db.func.now())
 
     def __repr__(self):
@@ -35,4 +36,6 @@ class Quarantine(db.Model):
     email_subject = db.Column(db.String(120))
     email_size = db.Column(db.Integer)
     email_id = db.Column(db.String(120))
+    to_restore = db.Column(db.Boolean, default=False, server_default=text("false"))
+    was_restored = db.Column(db.Boolean, default=False, server_default=text("false"))
     created_at = db.Column(db.DateTime, server_default=db.func.now(), default=db.func.now())

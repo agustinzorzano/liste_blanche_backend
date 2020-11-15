@@ -3,6 +3,7 @@ from sqlalchemy import text
 
 
 class User(db.Model):
+    __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
     full_name = db.Column(db.String(120))
     # username = db.Column(db.String(64), index=True, unique=True)
@@ -17,18 +18,36 @@ class User(db.Model):
 
 
 class WhiteList(db.Model):
+    __tablename__ = 'white_list'
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120))
+    fk_user = db.Column(db.Integer, db.ForeignKey(User.id, ondelete="RESTRICT"))
+
+
+class WhiteListRegularExpression(db.Model):
+    __tablename__ = 'white_list_regular_expression'
+    # ex: \S+@gmail[.]com
+    id = db.Column(db.Integer, primary_key=True)
+    expression = db.Column(db.String(120))
     fk_user = db.Column(db.Integer, db.ForeignKey(User.id, ondelete="RESTRICT"))
 
 
 class BlackList(db.Model):
+    __tablename__ = 'black_list'
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120))
     fk_user = db.Column(db.Integer, db.ForeignKey(User.id, ondelete="RESTRICT"))
 
 
+class BlackListRegularExpression(db.Model):
+    __tablename__ = 'black_list_regular_expression'
+    id = db.Column(db.Integer, primary_key=True)
+    expression = db.Column(db.String(120))
+    fk_user = db.Column(db.Integer, db.ForeignKey(User.id, ondelete="RESTRICT"))
+
+
 class Quarantine(db.Model):
+    __tablename__ = 'quarantine'
     # TODO: check the types and sizes
     id = db.Column(db.Integer, primary_key=True)
     fk_user = db.Column(db.Integer, db.ForeignKey(User.id, ondelete="RESTRICT"))

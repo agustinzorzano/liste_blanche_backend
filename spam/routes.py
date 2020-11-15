@@ -1,5 +1,5 @@
 from spam import app, db
-from spam.models import User, WhiteList
+from spam.models import User, WhiteList, WhiteListRegularExpression
 
 
 @app.route('/')
@@ -32,3 +32,9 @@ def index4():
     return 'ok'
 
 
+@app.route('/4')
+def index5():
+    wle = WhiteListRegularExpression(expression="\S+@gmail[.]com", fk_user=1)
+    db.session.add(wle)
+    db.session.commit()
+    return 'ok'

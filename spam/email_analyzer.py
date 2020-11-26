@@ -60,7 +60,7 @@ class EmailAnalyzer:
                     self.mailbox.mark_as_unseen(mail)
             elif sender in self.black_list:
                 # We delete the email
-                # mailbox.delete(mail)
+                # self.mailbox.delete(mail)
                 print("Deleting")
             elif fulfils_expression(sender, self.whitelist_expressions):
                 if is_unseen:
@@ -83,7 +83,7 @@ class EmailAnalyzer:
                 # we save the email in the repository
                 size = message.save(path)
                 print('Message from {} with id {} and size {}, was deleted and saved in {}\n'.format(sender, message.message_id(), size, path))
-                # mailbox.delete(mail)
+                # self.mailbox.delete(mail)
                 # we save some information in the database
                 quarantined_email = Quarantine(fk_user=self.user.id, email_sender=sender, email_subject=message.subject(),
                                                email_size=size, email_id=message.message_id())

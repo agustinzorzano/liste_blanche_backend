@@ -16,11 +16,22 @@ pip freeze > requirements.txt
 pip install -r requirements.txt
 ```
 
+### Set Up Database
+Enter to mysql as a root user and run the following command
+```terminal
+create database <database_name>;
+create user '<username>'@localhost identified by '<password>';
+grant all privileges on <database_name>.* to '<username>'@localhost;
+flush privileges;
+show grants for <username>@localhost;
+```
+After that we will use this user
+
 ### Migrate Database
 ```terminal
-python flask db init
-python flask db migrate
-python flask db upgrade
+flask db init
+flask db migrate
+flask db upgrade
 ```
 
 ### Run Summary

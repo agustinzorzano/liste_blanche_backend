@@ -82,3 +82,10 @@ class Imap:
         # TODO: confirm the reset date
         message.reset_date()
         self.mail.append("INBOX", "", imaplib.Time2Internaldate(time.time()), message.str().encode('utf-8'))
+
+    def start_idle(self):
+        """Starts the IDLE mode with the IMAP server"""
+        self.mail.send(("%s IDLE\r\n"%self.mail._new_tag()).encode())
+
+    def readline(self):
+        return self.mail.readline().decode()

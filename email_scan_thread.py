@@ -7,6 +7,7 @@ from spam.smtp import Smtp
 from spam.email import Email
 from spam.email_analyzer import EmailAnalyzer
 from dotenv import load_dotenv
+import threading
 load_dotenv()
 
 BASE_PATH = os.environ.get("BASE_PATH")
@@ -15,15 +16,13 @@ BASE_PATH = os.environ.get("BASE_PATH")
 
 def get_imap_server(user_email):
     """Returns the IMAP server depending on the email"""
-    servers = {'gmx.com': 'imap.gmx.com', 'gmail.com': 'imap.gmail.com',
-               'laposte.net': 'imap.laposte.net'}
+    servers = {'gmx.com': 'imap.gmx.com', 'gmail.com': 'imap.gmail.com'}
     return servers[user_email.split('@')[1]]
 
 
 def get_smtp_server(user_email):
     """Returns the SMTP server depending on the email"""
-    servers = {'gmx.com': 'mail.gmx.com', 'gmail.com': 'smtp.gmail.com',
-               'laposte.net': 'smtp.laposte.net'}
+    servers = {'gmx.com': 'mail.gmx.com', 'gmail.com': 'smtp.gmail.com'}
     return servers[user_email.split('@')[1]]
 
 
@@ -45,22 +44,35 @@ def restore_emails(mailbox, user):
         db.session.commit()
 
 
-def main():
-    if len(sys.argv) < 2:
-        return
-    user_email = sys.argv[1]
+def email_event_reader(user_email, thread_list, event, lock):
+    """Starts the idle event with the mailbox and waits for the arrive of new emails. When a new email arrives, it
+     notifies it with an event"""
+    print("get user thread")
     user = User.query.filter(User.email == user_email).first()
     if user is None:
         return
     password = user.email_password  # TODO: Decrypt the password
+    print("connect mailbox thread")
     mailbox = Imap(get_imap_server(user.email))
-    smtp_sender = Smtp(get_smtp_server(user.email))
+    # TODO: add an event to notify the other thread if this one finishes
     if not mailbox.login(user_email, password):
-        return
-    if not smtp_sender.login(user_email, password):
         return
     mailbox.select('inbox')
 
+    mailbox.start_idle()
+    while True:
+        message = mailbox.readline()
+        print(message)
+        if "EXISTS" not in message and "RECENT" not in message:
+            continue
+        lock.acquire()
+        thread_list.append(message)
+        event.set()
+        lock.release()
+
+
+def scan_email(mailbox, smtp_sender, user):
+    """Scans the last emails received"""
     last_uid = user.last_uid_scanned
     if last_uid == 0:
         # The mailbox has never been scanned
@@ -69,12 +81,18 @@ def main():
     # We get all the unseen and seen emails whose uid is greater than last_uid_scanned
     unseen_emails = mailbox.search_unseen(user.created_at, last_uid)
     seen_emails = mailbox.search_seen(user.created_at, last_uid)
+    print(unseen_emails)
+    print(seen_emails)
 
     # We ignore the last scanned mail
     if unseen_emails[0::-1] == [str(user.last_uid_scanned)]:
         unseen_emails.pop(0)
     if seen_emails[0::-1] == [str(user.last_uid_scanned)]:
         seen_emails.pop(0)
+        
+    print(unseen_emails)
+    print(seen_emails)
+
 
     mails_to_scan = len(unseen_emails) + len(seen_emails)
 
@@ -88,8 +106,50 @@ def main():
         user.last_uid_scanned = last_scanned_id
         db.session.commit()
 
-    # We restore the emails that need to be restored
-    restore_emails(mailbox, user)
+
+def main():
+    if len(sys.argv) < 2:
+        return
+    user_email = sys.argv[1]
+    event = threading.Event()
+    lock = threading.Lock()
+    thread_list = []
+    thread = threading.Thread(target=email_event_reader, args=(user_email, thread_list, event, lock))
+    print("before thread")
+    thread.start()
+    while True:
+        print("get user main")
+        user = User.query.filter(User.email == user_email).first()
+        if user is None:
+            break
+        password = user.email_password  # TODO: Decrypt the password
+        print("connect mailbox main")
+        mailbox = Imap(get_imap_server(user.email))
+        smtp_sender = Smtp(get_smtp_server(user.email))
+        # TODO: add an event to notify the other thread if this one finishes
+        if not mailbox.login(user_email, password):
+            break
+        if not smtp_sender.login(user_email, password):
+            break
+        mailbox.select('inbox')
+        # TODO: add the mechanism to reconnect to the mailbox and smtp if it is necessary
+        while True:
+            # We wait 2 minutes for at most 2 minutes to receive an event. If we receive an event, we scan the mailbox
+            # and then we restore the emails. If no event arrives after 2 minutes, we restore the emails and then we
+            # wait again.
+            print("waiting for an event")
+            event_is_set = event.wait(120)
+            if event_is_set and thread_list:
+                lock.acquire()
+                event.clear()
+                thread_list.clear()
+                lock.release()
+                print("analyse email")
+                scan_email(mailbox, smtp_sender, user)
+
+            # We restore the emails that need to be restored
+            restore_emails(mailbox, user)
+    thread.join()
 
 
 main()

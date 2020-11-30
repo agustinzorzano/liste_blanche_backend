@@ -4,6 +4,7 @@ import datetime
 from spam import db
 from spam.models import Quarantine
 from spam.models import User
+from sqlalchemy import or_
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -20,8 +21,10 @@ def main():
     if user is None:
         return
     limit_date = datetime.date.today() - datetime.timedelta(40)
-    emails_to_delete = Quarantine.query.filter(Quarantine.fk_user == user.id,
-                                               Quarantine.created_at < limit_date).all()
+    emails_to_delete = Quarantine.query.filter(Quarantine.fk_user == 1,
+                                               or_(Quarantine.created_at < limit_date,
+                                                   Quarantine.to_eliminate == True)).all()
+
     for mail in emails_to_delete:
         path = os.path.join(BASE_PATH, user.email, mail.email_id + '.eml')
         if os.path.exists(path):

@@ -55,6 +55,7 @@ class Quarantine(db.Model):
     email_subject = db.Column(db.String(120))
     email_size = db.Column(db.Integer)
     email_id = db.Column(db.String(120))
+    to_eliminate = db.Column(db.Boolean, default=False, server_default=text("false"))
     to_restore = db.Column(db.Boolean, default=False, server_default=text("false"))
     was_restored = db.Column(db.Boolean, default=False, server_default=text("false"))
     created_at = db.Column(db.DateTime, server_default=db.func.now(), default=db.func.now())

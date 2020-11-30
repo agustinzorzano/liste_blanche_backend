@@ -93,7 +93,6 @@ def scan_email(mailbox, smtp_sender, user):
     print(unseen_emails)
     print(seen_emails)
 
-
     mails_to_scan = len(unseen_emails) + len(seen_emails)
 
     if mails_to_scan > 0:

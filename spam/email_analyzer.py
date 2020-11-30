@@ -50,7 +50,8 @@ class EmailAnalyzer:
         emails_in_quarantine = Quarantine.query.filter(Quarantine.fk_user == self.user.id).with_entities(Quarantine.email_id).all()
         emails_in_quarantine = [mail[0] for mail in emails_in_quarantine]
 
-        parameters = {'PERSON_NAME': self.user.full_name.title()}
+        verify_url = os.environ.get("FRONTEND_ADDRESS") + "/verify/{}"
+        parameters = {'PERSON_NAME': self.user.full_name.title(), 'VERIFY_URL': ""}
         for mail in mails:
             sender = self.mailbox.get_sender(mail)
             sender = sender.strip('>').split('<')[-1]
@@ -90,5 +91,6 @@ class EmailAnalyzer:
                 db.session.add(quarantined_email)
                 db.session.commit()
                 # we send an email with the captcha
+                parameters['VERIFY_URL'] = verify_url.format(quarantined_email.id)
                 self.smtp_sender.send_message(self.user.email, sender, 'RE: ' + message.subject(),
                                               MessageCreator.create_message_template(TEMPLATE_NAME, parameters))

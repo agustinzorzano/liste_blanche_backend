@@ -3,6 +3,7 @@ import os
 from spam import db
 from spam.imap import Imap
 from spam.models import User, Quarantine
+from spam.encryptor import Encryptor
 from spam.smtp import Smtp
 from spam.email import Email
 from spam.email_analyzer import EmailAnalyzer
@@ -52,7 +53,7 @@ def main():
     user = User.query.filter(User.email == user_email).first()
     if user is None:
         return
-    password = user.email_password  # TODO: Decrypt the password
+    password = Encryptor.decrypt(user.email_password)  # TODO: Decrypt the password
     mailbox = Imap(get_imap_server(user.email))
     smtp_sender = Smtp(get_smtp_server(user.email))
     if not mailbox.login(user_email, password):

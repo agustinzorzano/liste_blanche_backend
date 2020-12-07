@@ -50,7 +50,7 @@ class EmailAnalyzer:
         emails_in_quarantine = Quarantine.query.filter(Quarantine.fk_user == self.user.id).with_entities(Quarantine.email_id).all()
         emails_in_quarantine = [mail[0] for mail in emails_in_quarantine]
 
-        verify_url = os.environ.get("FRONTEND_ADDRESS") + "/verify/{}"
+        verify_url = os.environ.get("FRONTEND_ADDRESS") + "verify/{}"
         parameters = {'PERSON_NAME': self.user.full_name.title(), 'VERIFY_URL': ""}
         for mail in mails:
             sender = self.mailbox.get_sender(mail)
@@ -84,7 +84,7 @@ class EmailAnalyzer:
                 # we save the email in the repository
                 size = message.save(path)
                 print('Message from {} with id {} and size {}, was deleted and saved in {}\n'.format(sender, message.message_id(), size, path))
-                # self.mailbox.delete(mail)
+                self.mailbox.delete(mail)
                 # we save some information in the database
                 quarantined_email = Quarantine(fk_user=self.user.id, email_sender=sender, email_subject=message.subject(),
                                                email_size=size, email_id=message.message_id())

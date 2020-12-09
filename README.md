@@ -51,8 +51,8 @@ In the crontab we have to define the processes we want to run and when we want t
 ```terminal
 # Environment variables
 PROJECT_VIRTUAL_ENVIRONMENT_PATH=<path to the activation of the virtual environment. Ex: /home/venv/bin/activate>
-PROJECT_USERNAMES_PATH=<path to the file with the emails>
-PROJECT_EMAIL_SCAN_PATH=<path email_scan.py>
+PROJECT_USERNAMES_PATH=<path to get_user.py>
+PROJECT_EMAIL_SCAN_PATH=<path to email_scan.py>
 PROJECT_SUMMARY_PATH=<path to summary.py>
 
 # Processes

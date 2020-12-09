@@ -14,7 +14,7 @@ class User(db.Model):
     created_at = db.Column(db.DateTime, server_default=db.func.now(), default=db.func.now())
 
     def __repr__(self):
-        return '<User {}>'.format(self.username)
+        return '<User {}>'.format(self.email)
 
 
 class WhiteList(db.Model):

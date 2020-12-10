@@ -53,7 +53,8 @@ def main():
     user = User.query.filter(User.email == user_email).first()
     if user is None:
         return
-    password = Encryptor.decrypt(user.email_password)  # TODO: Decrypt the password
+    # We decrypt the password
+    password = Encryptor.decrypt(user.email_password)
     mailbox = Imap(get_imap_server(user.email))
     smtp_sender = Smtp(get_smtp_server(user.email))
     if not mailbox.login(user_email, password):
@@ -90,7 +91,7 @@ def main():
         db.session.commit()
 
     # We restore the emails that need to be restored
-    restore_emails(mailbox, user)
+    # restore_emails(mailbox, user)
 
 
 main()

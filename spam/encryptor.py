@@ -12,6 +12,7 @@ ENCRYPTOR_PRIVATE_KEY_PATH = os.environ.get("ENCRYPTOR_PRIVATE_KEY_PATH")
 
 
 def get_key(path, key_type, password=None):
+    """It reads and returns the correct RSA key (public or private)"""
     function = {
         'public': lambda file, pwd: serialization.load_pem_public_key(file.read(), backend=default_backend()),
         'private': lambda file, pwd: serialization.load_pem_private_key(file.read(), password=pwd, backend=default_backend())
@@ -24,6 +25,7 @@ def get_key(path, key_type, password=None):
 class Encryptor:
     @staticmethod
     def encrypt(raw_text):
+        """It encrypts the message using RSA"""
         public_key = get_key(ENCRYPTOR_PUBLIC_KEY_PATH, 'public')
         encrypted = public_key.encrypt(
             raw_text.encode(),
@@ -37,6 +39,7 @@ class Encryptor:
 
     @staticmethod
     def decrypt(cipher_text):
+        """It decrypts the message using RSA"""
         private_key = get_key(ENCRYPTOR_PRIVATE_KEY_PATH, 'private')
 
         try:

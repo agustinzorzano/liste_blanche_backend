@@ -48,6 +48,7 @@ def index5():
 
 @app.route('/user/<user_id>/email/restoration', methods=['POST'])
 def restore_emails(user_id):
+    """Endpoint to restore emails to the mailbox"""
     user = User.query.filter(User.id == user_id).first()
     if user is None:
         return "error", 404
@@ -76,6 +77,7 @@ def restore_emails(user_id):
 
 @app.route('/connection', methods=['POST'])
 def test_connection():
+    """Endpoint to test the IMAP connection with the mailbox"""
     if not request.json:
         return "error", 404
     data = request.get_json()

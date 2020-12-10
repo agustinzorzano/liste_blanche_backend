@@ -6,3 +6,5 @@ venv/
 .env
 .DS_Store
 usernames.txt
+private_key.pem
+public_key.pem

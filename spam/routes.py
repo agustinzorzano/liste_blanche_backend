@@ -1,7 +1,9 @@
+from flask import request
 from spam import app, db
 from spam.models import User, WhiteList, WhiteListRegularExpression, Quarantine
 from spam.imap import Imap
 from spam.email import Email
+from spam.encryptor import Encryptor
 import os
 
 BASE_PATH = os.environ.get("BASE_PATH")
@@ -46,11 +48,13 @@ def index5():
 
 @app.route('/user/<user_id>/email/restoration', methods=['POST'])
 def restore_emails(user_id):
+    """Endpoint to restore emails to the mailbox"""
     user = User.query.filter(User.id == user_id).first()
     if user is None:
         return "error", 404
     mailbox = Imap(get_imap_server(user.email))
-    if not mailbox.login(user.email, user.email_password):
+    password = Encryptor.decrypt(user.email_password)
+    if not mailbox.login(user.email, password):
         return "error", 404
     mails_to_restore = Quarantine.query.filter(Quarantine.fk_user == user.id,
                                                Quarantine.to_restore == True,
@@ -68,6 +72,24 @@ def restore_emails(user_id):
     if mails_to_restore:
         db.session.commit()
 
+    return '', 204
+
+
+@app.route('/connection', methods=['POST'])
+def test_connection():
+    """Endpoint to test the IMAP connection with the mailbox"""
+    if not request.json:
+        return "error", 404
+    data = request.get_json()
+    email = data.get("email")
+    # password = data.get("password")
+    password = Encryptor.decrypt(data.get("password"))
+    if not email or not password:
+        return "error", 404
+
+    mailbox = Imap(get_imap_server(email))
+    if not mailbox.login(email, password):
+        return "error", 404
     return '', 204
 
 

@@ -51,8 +51,8 @@ In the crontab we have to define the processes we want to run and when we want t
 ```terminal
 # Environment variables
 PROJECT_VIRTUAL_ENVIRONMENT_PATH=<path to the activation of the virtual environment. Ex: /home/venv/bin/activate>
-PROJECT_USERNAMES_PATH=<path to the file with the emails>
-PROJECT_EMAIL_SCAN_PATH=<path email_scan.py>
+PROJECT_USERNAMES_PATH=<path to get_user.py>
+PROJECT_EMAIL_SCAN_PATH=<path to email_scan.py>
 PROJECT_SUMMARY_PATH=<path to summary.py>
 
 # Processes
@@ -62,6 +62,6 @@ PROJECT_SUMMARY_PATH=<path to summary.py>
 0 0 * * * /bin/bash <path to summary.sh> > <path to a log file> 2>&1
 ```
 
-The first part defines some environment variables which are going to be used in the scripts. The usernames file is a file
-which has all the emails of the users, one email per line. The processes define the time they are going to be executed and
-what they are going to execute. The first one is executed each 5 minutes. The second one, is executed at 00:00 everyday.
+The first part defines some environment variables which are going to be used in the scripts.
+The processes define the time they are going to be executed and
+what they are going to execute. The first one is executed each 5 minutes. The second one, is executed everyday at 00:00.

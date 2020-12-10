@@ -88,4 +88,5 @@ class Imap:
         self.mail.send(("%s IDLE\r\n"%self.mail._new_tag()).encode())
 
     def readline(self):
+        """Waits until the mailbox sends a new message and returns this message"""
         return self.mail.readline().decode()

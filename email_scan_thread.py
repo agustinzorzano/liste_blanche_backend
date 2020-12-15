@@ -52,12 +52,10 @@ def email_event_reader(user_email, thread_list, event, lock):
     user = User.query.filter(User.email == user_email).first()
     if user is None:
         return
-    password = Encryptor.decrypt(user.email_password)  # TODO: Decrypt the password
+    password = Encryptor.decrypt(user.email_password)
     print("connect mailbox thread")
-    mailbox = Imap(get_imap_server(user.email))
     # TODO: add an event to notify the other thread if this one finishes
-    if not mailbox.login(user_email, password):
-        return
+    mailbox = Imap(user_email, password)
     mailbox.select('inbox')
 
     mailbox.start_idle()
@@ -124,11 +122,9 @@ def main():
             break
         password = user.email_password  # TODO: Decrypt the password
         print("connect mailbox main")
-        mailbox = Imap(get_imap_server(user.email))
+        mailbox = Imap(user.email, password)
         smtp_sender = Smtp(get_smtp_server(user.email))
         # TODO: add an event to notify the other thread if this one finishes
-        if not mailbox.login(user_email, password):
-            break
         if not smtp_sender.login(user_email, password):
             break
         mailbox.select('inbox')

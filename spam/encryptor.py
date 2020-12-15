@@ -2,6 +2,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding
+from spam.exceptions import EncryptionError
 import os
 import base64
 import binascii
@@ -26,16 +27,19 @@ class Encryptor:
     @staticmethod
     def encrypt(raw_text):
         """It encrypts the message using RSA"""
-        public_key = get_key(ENCRYPTOR_PUBLIC_KEY_PATH, 'public')
-        encrypted = public_key.encrypt(
-            raw_text.encode(),
-            padding.OAEP(
-                mgf=padding.MGF1(algorithm=hashes.SHA256()),
-                algorithm=hashes.SHA256(),
-                label=None
+        try:
+            public_key = get_key(ENCRYPTOR_PUBLIC_KEY_PATH, 'public')
+            encrypted = public_key.encrypt(
+                raw_text.encode(),
+                padding.OAEP(
+                    mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                    algorithm=hashes.SHA256(),
+                    label=None
+                )
             )
-        )
-        return base64.urlsafe_b64encode(encrypted).decode()
+            return base64.urlsafe_b64encode(encrypted).decode()
+        except (binascii.Error, ValueError):
+            raise EncryptionError
 
     @staticmethod
     def decrypt(cipher_text):
@@ -52,5 +56,5 @@ class Encryptor:
                 )
             )
         except (binascii.Error, ValueError):
-            raise IOError  # EncryptionError
+            raise EncryptionError
         return original_message.decode()

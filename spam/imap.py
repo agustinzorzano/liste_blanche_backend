@@ -2,42 +2,76 @@ import imaplib
 import email
 import logging
 import time
+from functools import wraps
 from spam.email import Email
+from spam.exceptions import ImapError
+
+
+def get_imap_server(user_email):
+    """Returns the IMAP server depending on the email"""
+    servers = {'gmx.com': 'imap.gmx.com', 'gmail.com': 'imap.gmail.com',
+               'laposte.net': 'imap.laposte.net'}
+    return servers[user_email.split('@')[1]]
+
+
+def handle_error(function):
+    """Decoration which will execute the function and return its value. If there is an error,
+    it will reconnect to the server and try another time to execute the function"""
+    @wraps(function)
+    def decorated_function(*args, **kwargs):
+        try:
+            # We execute the method
+            return function(*args)
+        except imaplib.IMAP4.error:
+            # If there is an error we reconnect and we re-execute the method
+            try:
+                args[0]._connection()
+                return function(*args)
+            except imaplib.IMAP4.error:
+                # The reconnection did not solve the problem
+                raise ImapError
+    return decorated_function
 
 
 class Imap:
-    def __init__(self, server='imap.gmail.com'):
-        logging.info("Connecting to the server...")
-        self.mail = imaplib.IMAP4_SSL(server)  # It takes time to connect to a server like gmail
-        logging.info("Connection accomplished")
+    def __init__(self, user_email, password):
+        self.user_email = user_email
+        self.password = password
+        self._connection()
+        self.i = 1
 
-    def login(self, user_email, password):
-        """Tries to log in. Returns True if it succeeds"""
+    def _connection(self):
         try:
-            self.mail.login(user_email, password)
-            return True
+            logging.info("Connecting to the server...")
+            self.mail = imaplib.IMAP4_SSL(get_imap_server(self.user_email))  # It takes time to connect to a server like gmail
+            self.mail.login(self.user_email, self.password)
+            logging.info("Connection accomplished")
         except imaplib.IMAP4.error:
-            return False
+            raise ImapError
 
     def list(self):
         return self.mail.list()
 
+    @handle_error
     def select(self, folder='inbox'):
         """Selects the current mailbox folder"""
         self.mail.select(folder)
 
+    @handle_error
     def get_mail(self, email_id):
         """Returns the email content of the email with the id email_id"""
         # typ, data = self.mail.fetch(email_id.encode(), '(RFC822)')
         typ, data = self.mail.uid("fetch", email_id, '(RFC822)')
         return Email(data)
 
+    @handle_error
     def get_sender(self, email_id):
         """Returns the sender of the email with the id email_id"""
         # typ, data = self.mail.fetch(email_id.encode(), '(BODY[HEADER.FIELDS (From)])')
         typ, data = self.mail.uid("fetch", email_id, '(BODY[HEADER.FIELDS (From)])')
         return email.message_from_string(data[0][1].decode())['from']
 
+    @handle_error
     def _search(self, flags, since_date, initial_uid=1):
         """Returns a list with the emails whose uid is greater than initial_uid and were received after the date since_date"""
         # return self.mail.search(None, '({} SINCE {} UID {}:*)'.format(flags, since_date.strftime("%d-%b-%Y"), initial_uid))[1][0].decode().split()
@@ -60,6 +94,7 @@ class Imap:
         were received after the date since_date"""
         return self._search('all', since_date, initial_uid)
 
+    @handle_error
     def mark_as_unseen(self, email_ids):
         """It marks an email or a list of emails as unseen"""
         if type(email_ids) != list:
@@ -68,6 +103,7 @@ class Imap:
             self.mail.uid("store", mail, '-FLAGS', '(\\Seen)')
         self.mail.expunge()
 
+    @handle_error
     def delete(self, email_ids):
         """Deletes an email from the mailbox"""
         if type(email_ids) != list:
@@ -76,6 +112,7 @@ class Imap:
             self.mail.uid("store", mail, '+FLAGS', '\\Deleted')
         self.mail.expunge()
 
+    @handle_error
     def append(self, message):
         """Adds an email to the mailbox"""
         # We reset the date so that the reception date appears as the current date

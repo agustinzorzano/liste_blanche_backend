@@ -55,10 +55,11 @@ def main():
         return
     # We decrypt the password
     password = Encryptor.decrypt(user.email_password)
-    mailbox = Imap(get_imap_server(user.email))
+    # mailbox = Imap(get_imap_server(user.email))
+    mailbox = Imap(user.email, password)
     smtp_sender = Smtp(get_smtp_server(user.email))
-    if not mailbox.login(user_email, password):
-        return
+    # if not mailbox.login(user_email, password):
+    #     return
     if not smtp_sender.login(user_email, password):
         return
     mailbox.select('inbox')

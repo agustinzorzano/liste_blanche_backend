@@ -21,7 +21,7 @@ def handle_error(function):
         try:
             # We execute the method
             return function(*args)
-        except (smtplib.SMTPServerDisconnected, smtplib.SMTPResponseException):
+        except (smtplib.SMTPServerDisconnected, smtplib.SMTPResponseException, smtplib.SMTPRecipientsRefused):
             # If there is an error we reconnect and we re-execute the method
             try:
                 args[0]._connection()

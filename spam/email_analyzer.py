@@ -27,17 +27,21 @@ class EmailAnalyzer:
         self.whitelist_expressions = WhiteListRegularExpression.query\
             .filter(WhiteListRegularExpression.fk_user == user.id)\
             .with_entities(WhiteListRegularExpression.expression).all()
+        # We keep only the regex expression
         self.whitelist_expressions = [mail[0] for mail in self.whitelist_expressions]
 
         self.blacklist_expressions = BlackListRegularExpression.query\
             .filter(BlackListRegularExpression.fk_user == user.id)\
             .with_entities(BlackListRegularExpression.expression).all()
+        # We keep only the regex expression
         self.blacklist_expressions = [mail[0] for mail in self.blacklist_expressions]
 
         self.white_list = WhiteList.query.filter(WhiteList.fk_user == user.id).all()
+        # We keep only the email
         self.white_list = [mail.email for mail in self.white_list]
 
         self.black_list = BlackList.query.filter(BlackList.fk_user == user.id).all()
+        # We keep only the email
         self.black_list = [mail.email for mail in self.black_list]
 
     def analyse_mails(self, mails, is_unseen):
@@ -61,7 +65,7 @@ class EmailAnalyzer:
                     self.mailbox.mark_as_unseen(mail)
             elif sender in self.black_list:
                 # We delete the email
-                # self.mailbox.delete(mail)
+                self.mailbox.delete(mail)
                 print("Deleting")
             elif fulfils_expression(sender, self.whitelist_expressions):
                 if is_unseen:
@@ -69,7 +73,7 @@ class EmailAnalyzer:
                     self.mailbox.mark_as_unseen(mail)
             elif fulfils_expression(sender, self.blacklist_expressions):
                 # We delete the email
-                # mailbox.delete(mail)
+                self.mailbox.delete(mail)
                 print("Deleting")
             else:
                 # we add the email to the quarantine
@@ -79,17 +83,27 @@ class EmailAnalyzer:
                     print("(Provisional) Message already in quarantine")
                     # mailbox.mark_as_unseen(mail)
                     continue
-                path = os.path.join(BASE_PATH, self.user.email, message.message_id() + '.eml')
+
+                directory_path = os.path.join(BASE_PATH, self.user.email)
+                # We verify the user has a directory. If he does not have, we create one
+                if not os.path.exists(directory_path):
+                    os.mkdir(directory_path)
+
+                path = os.path.join(directory_path, message.message_id() + '.eml')
 
                 # we save the email in the repository
                 size = message.save(path)
                 print('Message from {} with id {} and size {}, was deleted and saved in {}\n'.format(sender, message.message_id(), size, path))
-                self.mailbox.delete(mail)
+
                 # we save some information in the database
                 quarantined_email = Quarantine(fk_user=self.user.id, email_sender=sender, email_subject=message.subject(),
                                                email_size=size, email_id=message.message_id())
                 db.session.add(quarantined_email)
                 db.session.commit()
+
+                # We delete the email
+                self.mailbox.delete(mail)
+
                 # we send an email with the captcha
                 parameters['VERIFY_URL'] = verify_url.format(quarantined_email.id)
                 self.smtp_sender.send_message(self.user.email, sender, 'RE: ' + message.subject(),

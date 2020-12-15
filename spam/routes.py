@@ -9,43 +9,6 @@ import os
 
 BASE_PATH = os.environ.get("BASE_PATH")
 
-@app.route('/')
-@app.route('/index')
-def index():
-    return "Hello, World!"
-
-
-@app.route('/1')
-def index2():
-    a = User.query.filter(User.email == 'aguszorza@gmx.com').first()
-    w = WhiteList(email='service@corp.gmx.com', fk_user=a.id)
-    db.session.add(w)
-    db.session.commit()
-    return "Hello, World!"
-
-
-@app.route('/2')
-def index3():
-    l = WhiteList.query.filter(WhiteList.fk_user == 2).with_entities(WhiteList.email).all()
-    print(l)
-    return 'ok'
-
-
-@app.route('/3')
-def index4():
-    user = User.query.filter(User.email == 'aguszorza@gmx.com').first()
-    user.full_name = 'Agustin Zorzano'
-    db.session.commit()
-    return 'ok'
-
-
-@app.route('/4')
-def index5():
-    wle = WhiteListRegularExpression(expression="\S+@gmail[.]com", fk_user=1)
-    db.session.add(wle)
-    db.session.commit()
-    return 'ok'
-
 
 @app.route('/user/<user_id>/email/restoration', methods=['POST'])
 def restore_emails(user_id):
@@ -96,6 +59,7 @@ def test_connection():
 
 @app.errorhandler(ApiError)
 def handle_error(error):
+    """Error handler. If an exception is raised and not caught by an endpoint, this function will handle it"""
     status_code = error.status_code
     # response = response_error(error, status_code)
     # return jsonify(response), status_code

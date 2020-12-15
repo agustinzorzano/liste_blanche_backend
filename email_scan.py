@@ -77,16 +77,5 @@ def main():
         user.last_uid_scanned = last_scanned_id
         db.session.commit()
 
-    # We restore the emails that need to be restored
-    # restore_emails(mailbox, user)
-
 
 main()
-
-
-# from spam.email import Email
-# file = open("<path>")
-# m = Email(file)
-# mailbox.append(m)
-# file.close()
-# return

@@ -7,10 +7,13 @@ import io
 class Email:
     def __init__(self, data):
         if type(data) == Message:
+            # The data is already a Message
             self.email = data
         elif type(data) == io.TextIOWrapper:
+            # The data is the path of the file thant contains the message
             self.email = email.message_from_file(data)
         else:
+            # We have to convert the data to Message
             self.email = email.message_from_string(data[0][1].decode())
 
     def sender(self):

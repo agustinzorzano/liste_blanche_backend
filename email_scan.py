@@ -14,20 +14,6 @@ BASE_PATH = os.environ.get("BASE_PATH")
 # logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 
-def get_imap_server(user_email):
-    """Returns the IMAP server depending on the email"""
-    servers = {'gmx.com': 'imap.gmx.com', 'gmail.com': 'imap.gmail.com',
-               'laposte.net': 'imap.laposte.net'}
-    return servers[user_email.split('@')[1]]
-
-
-def get_smtp_server(user_email):
-    """Returns the SMTP server depending on the email"""
-    servers = {'gmx.com': 'mail.gmx.com', 'gmail.com': 'smtp.gmail.com',
-               'laposte.net': 'smtp.laposte.net'}
-    return servers[user_email.split('@')[1]]
-
-
 def restore_emails(mailbox, user):
     """Restores the emails that need to be restored"""
     mails_to_restore = Quarantine.query.filter(Quarantine.fk_user == user.id,
@@ -57,11 +43,11 @@ def main():
     password = Encryptor.decrypt(user.email_password)
     # mailbox = Imap(get_imap_server(user.email))
     mailbox = Imap(user.email, password)
-    smtp_sender = Smtp(get_smtp_server(user.email))
+    smtp_sender = Smtp(user.email, password)
     # if not mailbox.login(user_email, password):
     #     return
-    if not smtp_sender.login(user_email, password):
-        return
+    # if not smtp_sender.login(user_email, password):
+    #     return
     mailbox.select('inbox')
 
     last_uid = user.last_uid_scanned

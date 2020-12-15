@@ -26,9 +26,9 @@ def main():
     # TODO: USE a special email for this
     email_sender = os.getenv('EMAIL_USER')
     password = os.getenv('EMAIL_PASSWORD')
-    smtp_sender = Smtp(os.getenv('EMAIL_HOST'))
-    if not smtp_sender.login(email_sender, password):
-        return
+    smtp_sender = Smtp(os.getenv('EMAIL_HOST'), password)
+    # if not smtp_sender.login(email_sender, password):
+    #     return
     # We set the parameters needed in the email template
     parameters = {'PERSON_NAME': user.full_name, 'PERSON_EMAIL': user.email, 'mails': mails,
                   'initial_date': initial_date, 'final_date': final_date}

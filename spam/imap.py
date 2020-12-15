@@ -38,9 +38,9 @@ class Imap:
         self.user_email = user_email
         self.password = password
         self._connection()
-        self.i = 1
 
     def _connection(self):
+        """Connects to the IMAP server and logs in with the email and password"""
         try:
             logging.info("Connecting to the server...")
             self.mail = imaplib.IMAP4_SSL(get_imap_server(self.user_email))  # It takes time to connect to a server like gmail

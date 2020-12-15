@@ -123,10 +123,8 @@ def main():
         password = user.email_password  # TODO: Decrypt the password
         print("connect mailbox main")
         mailbox = Imap(user.email, password)
-        smtp_sender = Smtp(get_smtp_server(user.email))
+        smtp_sender = Smtp(user.email, password)
         # TODO: add an event to notify the other thread if this one finishes
-        if not smtp_sender.login(user_email, password):
-            break
         mailbox.select('inbox')
         # TODO: add the mechanism to reconnect to the mailbox and smtp if it is necessary
         while True:

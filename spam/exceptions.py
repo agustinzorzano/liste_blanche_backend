@@ -10,6 +10,12 @@ class ImapError(ApiError):
         self.args += ("IMAP error produced", )
 
 
+class SmtpError(ApiError):
+    def __init__(self, *args, **kwargs):
+        ApiError.__init__(self, *args, **kwargs)
+        self.args += ("SMTP error produced", )
+
+
 class EncryptionError(ApiError):
     def __init__(self, *args, **kwargs):
         ApiError.__init__(self, *args, **kwargs)

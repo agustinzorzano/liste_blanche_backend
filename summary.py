@@ -26,7 +26,7 @@ def main():
     # TODO: USE a special email for this
     email_sender = os.getenv('EMAIL_USER')
     password = os.getenv('EMAIL_PASSWORD')
-    smtp_sender = Smtp(os.getenv('EMAIL_HOST'), password)
+    smtp_sender = Smtp(email_sender, password)
     # if not smtp_sender.login(email_sender, password):
     #     return
     # We set the parameters needed in the email template
@@ -34,7 +34,7 @@ def main():
                   'initial_date': initial_date, 'final_date': final_date}
     message = MessageCreator.create_message_template(TEMPLATE_NAME, parameters)
 
-    smtp_sender.send_message(email_sender, user_email, "Summary {}".format(final_date), message)
+    smtp_sender.send_message(email_sender, user.email, "Summary {}".format(final_date), message)
 
 
 main()

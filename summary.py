@@ -7,7 +7,7 @@ from spam.smtp import Smtp
 from dotenv import load_dotenv
 
 load_dotenv()
-TEMPLATE_NAME = 'summary_email.html'
+TEMPLATE_NAME = "summary_email.html"
 
 
 def main():
@@ -24,14 +24,19 @@ def main():
     initial_date = initial_date.strftime("%d/%m/%Y %H:%M")
     final_date = today.strftime("%d/%m/%Y %H:%M")
     # TODO: USE a special email for this
-    email_sender = os.getenv('EMAIL_USER')
-    password = os.getenv('EMAIL_PASSWORD')
+    email_sender = os.getenv("EMAIL_USER")
+    password = os.getenv("EMAIL_PASSWORD")
     smtp_sender = Smtp(email_sender, password)
     # if not smtp_sender.login(email_sender, password):
     #     return
     # We set the parameters needed in the email template
-    parameters = {'PERSON_NAME': user.full_name, 'PERSON_EMAIL': user.email, 'mails': mails,
-                  'initial_date': initial_date, 'final_date': final_date}
+    parameters = {
+        "PERSON_NAME": user.full_name,
+        "PERSON_EMAIL": user.email,
+        "mails": mails,
+        "initial_date": initial_date,
+        "final_date": final_date,
+    }
     message = MessageCreator.create_message_template(TEMPLATE_NAME, parameters)
 
     smtp_sender.send_message(email_sender, user.email, "Summary {}".format(final_date), message)

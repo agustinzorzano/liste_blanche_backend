@@ -1,2 +1,1 @@
 from spam import app
-

@@ -9,6 +9,7 @@ from spam.email import Email
 from spam.email_analyzer import EmailAnalyzer
 from dotenv import load_dotenv
 import threading
+
 load_dotenv()
 
 BASE_PATH = os.environ.get("BASE_PATH")
@@ -17,23 +18,25 @@ BASE_PATH = os.environ.get("BASE_PATH")
 
 def get_imap_server(user_email):
     """Returns the IMAP server depending on the email"""
-    servers = {'gmx.com': 'imap.gmx.com', 'gmail.com': 'imap.gmail.com'}
-    return servers[user_email.split('@')[1]]
+    servers = {"gmx.com": "imap.gmx.com", "gmail.com": "imap.gmail.com"}
+    return servers[user_email.split("@")[1]]
 
 
 def get_smtp_server(user_email):
     """Returns the SMTP server depending on the email"""
-    servers = {'gmx.com': 'mail.gmx.com', 'gmail.com': 'smtp.gmail.com'}
-    return servers[user_email.split('@')[1]]
+    servers = {"gmx.com": "mail.gmx.com", "gmail.com": "smtp.gmail.com"}
+    return servers[user_email.split("@")[1]]
 
 
 def restore_emails(mailbox, user):
     """Restores the emails that need to be restored"""
-    mails_to_restore = Quarantine.query.filter(Quarantine.fk_user == user.id,
-                                               Quarantine.to_restore == True,
-                                               Quarantine.was_restored == False).all()
+    mails_to_restore = Quarantine.query.filter(
+        Quarantine.fk_user == user.id,
+        Quarantine.to_restore == True,
+        Quarantine.was_restored == False,
+    ).all()
     for mail in mails_to_restore:
-        path = os.path.join(BASE_PATH, user.email, mail.email_id + '.eml')
+        path = os.path.join(BASE_PATH, user.email, mail.email_id + ".eml")
         if os.path.exists(path):
             file = open(path)
             message = Email(file)
@@ -47,7 +50,7 @@ def restore_emails(mailbox, user):
 
 def email_event_reader(user_email, thread_list, event, lock):
     """Starts the idle event with the mailbox and waits for the arrive of new emails. When a new email arrives, it
-     notifies it with an event"""
+    notifies it with an event"""
     print("get user thread")
     user = User.query.filter(User.email == user_email).first()
     if user is None:
@@ -56,7 +59,7 @@ def email_event_reader(user_email, thread_list, event, lock):
     print("connect mailbox thread")
     # TODO: add an event to notify the other thread if this one finishes
     mailbox = Imap(user_email, password)
-    mailbox.select('inbox')
+    mailbox.select("inbox")
 
     mailbox.start_idle()
     while True:
@@ -88,7 +91,7 @@ def scan_email(mailbox, smtp_sender, user):
         unseen_emails.pop(0)
     if seen_emails[0::-1] == [str(user.last_uid_scanned)]:
         seen_emails.pop(0)
-        
+
     print(unseen_emails)
     print(seen_emails)
 
@@ -125,7 +128,7 @@ def main():
         mailbox = Imap(user.email, password)
         smtp_sender = Smtp(user.email, password)
         # TODO: add an event to notify the other thread if this one finishes
-        mailbox.select('inbox')
+        mailbox.select("inbox")
         # TODO: add the mechanism to reconnect to the mailbox and smtp if it is necessary
         while True:
             # We wait 2 minutes for at most 2 minutes to receive an event. If we receive an event, we scan the mailbox

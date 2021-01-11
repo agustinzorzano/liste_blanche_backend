@@ -1,7 +1,7 @@
 from jinja2 import Environment, FileSystemLoader
 import os
 
-TEMPLATE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates/')
+TEMPLATE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates/")
 
 env = Environment(loader=FileSystemLoader(TEMPLATE_PATH))
 

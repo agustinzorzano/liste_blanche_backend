@@ -1,13 +1,20 @@
 import re
 import os
 from spam import db
-from spam.models import WhiteList, BlackList, WhiteListRegularExpression, BlackListRegularExpression, Quarantine
+from spam.models import (
+    WhiteList,
+    BlackList,
+    WhiteListRegularExpression,
+    BlackListRegularExpression,
+    Quarantine,
+)
 from spam.message_creator import MessageCreator
 from dotenv import load_dotenv
+
 load_dotenv()
 
 BASE_PATH = os.environ.get("BASE_PATH")
-TEMPLATE_NAME = 'captcha_email.html'
+TEMPLATE_NAME = "captcha_email.html"
 
 
 def fulfils_expression(mail, expressions):
@@ -24,15 +31,19 @@ class EmailAnalyzer:
         self.smtp_sender = smtp_sender
         self.user = user
 
-        self.whitelist_expressions = WhiteListRegularExpression.query\
-            .filter(WhiteListRegularExpression.fk_user == user.id)\
-            .with_entities(WhiteListRegularExpression.expression).all()
+        self.whitelist_expressions = (
+            WhiteListRegularExpression.query.filter(WhiteListRegularExpression.fk_user == user.id)
+            .with_entities(WhiteListRegularExpression.expression)
+            .all()
+        )
         # We keep only the regex expression
         self.whitelist_expressions = [mail[0] for mail in self.whitelist_expressions]
 
-        self.blacklist_expressions = BlackListRegularExpression.query\
-            .filter(BlackListRegularExpression.fk_user == user.id)\
-            .with_entities(BlackListRegularExpression.expression).all()
+        self.blacklist_expressions = (
+            BlackListRegularExpression.query.filter(BlackListRegularExpression.fk_user == user.id)
+            .with_entities(BlackListRegularExpression.expression)
+            .all()
+        )
         # We keep only the regex expression
         self.blacklist_expressions = [mail[0] for mail in self.blacklist_expressions]
 
@@ -51,14 +62,19 @@ class EmailAnalyzer:
             - If the email is not in the black list, it will delete it from the mailbox, save it in a repository as an .eml file,
               save some specific data in the database and send an email to the sender with the captcha.
         """
-        emails_in_quarantine = Quarantine.query.filter(Quarantine.fk_user == self.user.id).with_entities(Quarantine.email_id).all()
+        emails_in_quarantine = (
+            Quarantine.query.filter(Quarantine.fk_user == self.user.id).with_entities(Quarantine.email_id).all()
+        )
         emails_in_quarantine = [mail[0] for mail in emails_in_quarantine]
 
         verify_url = os.environ.get("FRONTEND_ADDRESS") + "verify/{}"
-        parameters = {'PERSON_NAME': self.user.full_name.title(), 'VERIFY_URL': ""}
+        parameters = {
+            "PERSON_NAME": self.user.full_name.title(),
+            "VERIFY_URL": "",
+        }
         for mail in mails:
             sender = self.mailbox.get_sender(mail)
-            sender = sender.strip('>').split('<')[-1]
+            sender = sender.strip(">").split("<")[-1]
             if sender in self.white_list:
                 if is_unseen:
                     # We mark the email as unseen since the user has not read it yet
@@ -89,15 +105,24 @@ class EmailAnalyzer:
                 if not os.path.exists(directory_path):
                     os.mkdir(directory_path)
 
-                path = os.path.join(directory_path, message.message_id() + '.eml')
+                path = os.path.join(directory_path, message.message_id() + ".eml")
 
                 # we save the email in the repository
                 size = message.save(path)
-                print('Message from {} with id {} and size {}, was deleted and saved in {}\n'.format(sender, message.message_id(), size, path))
+                print(
+                    "Message from {} with id {} and size {}, was deleted and saved in {}\n".format(
+                        sender, message.message_id(), size, path
+                    )
+                )
 
                 # we save some information in the database
-                quarantined_email = Quarantine(fk_user=self.user.id, email_sender=sender, email_subject=message.subject(),
-                                               email_size=size, email_id=message.message_id())
+                quarantined_email = Quarantine(
+                    fk_user=self.user.id,
+                    email_sender=sender,
+                    email_subject=message.subject(),
+                    email_size=size,
+                    email_id=message.message_id(),
+                )
                 db.session.add(quarantined_email)
                 db.session.commit()
 
@@ -105,6 +130,10 @@ class EmailAnalyzer:
                 self.mailbox.delete(mail)
 
                 # we send an email with the captcha
-                parameters['VERIFY_URL'] = verify_url.format(quarantined_email.id)
-                self.smtp_sender.send_message(self.user.email, sender, 'RE: ' + message.subject(),
-                                              MessageCreator.create_message_template(TEMPLATE_NAME, parameters))
+                parameters["VERIFY_URL"] = verify_url.format(quarantined_email.id)
+                self.smtp_sender.send_message(
+                    self.user.email,
+                    sender,
+                    "RE: " + message.subject(),
+                    MessageCreator.create_message_template(TEMPLATE_NAME, parameters),
+                )

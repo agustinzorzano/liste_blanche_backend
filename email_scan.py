@@ -8,6 +8,7 @@ from spam.smtp import Smtp
 from spam.email import Email
 from spam.email_analyzer import EmailAnalyzer
 from dotenv import load_dotenv
+
 load_dotenv()
 
 BASE_PATH = os.environ.get("BASE_PATH")
@@ -16,11 +17,13 @@ BASE_PATH = os.environ.get("BASE_PATH")
 
 def restore_emails(mailbox, user):
     """Restores the emails that need to be restored"""
-    mails_to_restore = Quarantine.query.filter(Quarantine.fk_user == user.id,
-                                               Quarantine.to_restore == True,
-                                               Quarantine.was_restored == False).all()
+    mails_to_restore = Quarantine.query.filter(
+        Quarantine.fk_user == user.id,
+        Quarantine.to_restore == True,
+        Quarantine.was_restored == False,
+    ).all()
     for mail in mails_to_restore:
-        path = os.path.join(BASE_PATH, user.email, mail.email_id + '.eml')
+        path = os.path.join(BASE_PATH, user.email, mail.email_id + ".eml")
         if os.path.exists(path):
             file = open(path)
             message = Email(file)
@@ -48,7 +51,7 @@ def main():
     #     return
     # if not smtp_sender.login(user_email, password):
     #     return
-    mailbox.select('inbox')
+    mailbox.select("inbox")
 
     last_uid = user.last_uid_scanned
     if last_uid == 0:

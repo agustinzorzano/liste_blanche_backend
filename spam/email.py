@@ -18,15 +18,15 @@ class Email:
 
     def sender(self):
         """Returns the sender of the email"""
-        return self.email['from']  # It might return something like "Name Surname <email>" or just the email
+        return self.email["from"]  # It might return something like "Name Surname <email>" or just the email
 
     def receiver(self):
         """Returns the receiver of the email"""
-        return self.email['to']
+        return self.email["to"]
 
     def subject(self):
         """Returns the subject of the email"""
-        return self.email['subject']
+        return self.email["subject"]
 
     def content(self):
         """Returns a list with the payload of the email (files attached, text in html, text in plaintext)"""
@@ -37,15 +37,15 @@ class Email:
 
     def content_type(self):
         """Returns the content type of the email"""
-        return self.email['content-type']
+        return self.email["content-type"]
 
     def message_id(self):
         """Returns the message id of the email"""
-        return self.email['message-id']
+        return self.email["message-id"]
 
     def save(self, path):
         """It saves the email in the path and returns the size of the file"""
-        with open(path, 'w') as outfile:
+        with open(path, "w") as outfile:
             gen = generator.Generator(outfile)
             gen.flatten(self.email)
             size = outfile.tell()

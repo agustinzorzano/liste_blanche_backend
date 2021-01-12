@@ -10,7 +10,7 @@ import os
 BASE_PATH = os.environ.get("BASE_PATH")
 
 
-@app.route('/user/<user_id>/email/restoration', methods=['POST'])
+@app.route("/user/<user_id>/email/restoration", methods=["POST"])
 def restore_emails(user_id):
     """Endpoint to restore emails to the mailbox"""
     user = User.query.filter(User.id == user_id).first()
@@ -20,12 +20,14 @@ def restore_emails(user_id):
     mailbox = Imap(user.email, password)
     # if not mailbox.login(user.email, password):
     #     return "error", 404
-    mails_to_restore = Quarantine.query.filter(Quarantine.fk_user == user.id,
-                                               Quarantine.to_restore == True,
-                                               Quarantine.was_restored == False).all()
+    mails_to_restore = Quarantine.query.filter(
+        Quarantine.fk_user == user.id,
+        Quarantine.to_restore == True,
+        Quarantine.was_restored == False,
+    ).all()
 
     for mail in mails_to_restore:
-        path = os.path.join(BASE_PATH, user.email, mail.email_id + '.eml')
+        path = os.path.join(BASE_PATH, user.email, mail.email_id + ".eml")
         if os.path.exists(path):
             file = open(path)
             message = Email(file)
@@ -36,10 +38,10 @@ def restore_emails(user_id):
     if mails_to_restore:
         db.session.commit()
 
-    return '', 204
+    return "", 204
 
 
-@app.route('/connection', methods=['POST'])
+@app.route("/connection", methods=["POST"])
 def test_connection():
     """Endpoint to test the IMAP connection with the mailbox"""
     if not request.json:
@@ -54,7 +56,7 @@ def test_connection():
     Imap(email, password)
     # if not mailbox.login(email, password):
     #     return "error", 404
-    return '', 204
+    return "", 204
 
 
 @app.errorhandler(ApiError)
@@ -63,4 +65,4 @@ def handle_error(error):
     status_code = error.status_code
     # response = response_error(error, status_code)
     # return jsonify(response), status_code
-    return '', status_code
+    return "", status_code

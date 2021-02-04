@@ -7,6 +7,7 @@ from spam.models import (
     WhiteListRegularExpression,
     BlackListRegularExpression,
     Quarantine,
+    History,
 )
 from spam.message_creator import MessageCreator
 from dotenv import load_dotenv
@@ -75,25 +76,35 @@ class EmailAnalyzer:
         for mail in mails:
             sender = self.mailbox.get_sender(mail)
             sender = sender.strip(">").split("<")[-1]
+            history = History(
+                    fk_user=self.user.id,
+                    email_sender=sender,
+                    email_subject=self.mailbox.get_subject(mail),
+            )
             if sender in self.white_list:
+                history.reason = "white_list"
                 if is_unseen:
                     # We mark the email as unseen since the user has not read it yet
                     self.mailbox.mark_as_unseen(mail)
             elif sender in self.black_list:
                 # We delete the email
+                history.reason = "black_list"
                 self.mailbox.delete(mail)
                 print("Deleting")
             elif fulfils_expression(sender, self.whitelist_expressions):
+                history.reason = "white_list_expression"
                 if is_unseen:
                     # We mark the email as unseen since the user has not read it yet
                     self.mailbox.mark_as_unseen(mail)
             elif fulfils_expression(sender, self.blacklist_expressions):
                 # We delete the email
+                history.reason = "black_list_expression"
                 self.mailbox.delete(mail)
                 print("Deleting")
             else:
                 # we add the email to the quarantine
                 # We get all the content of the email
+                history.reason = "quarantine"
                 message = self.mailbox.get_mail(mail)
                 if message.message_id() in emails_in_quarantine:  # TODO: delete this if
                     print("(Provisional) Message already in quarantine")
@@ -137,3 +148,5 @@ class EmailAnalyzer:
                     "RE: " + message.subject(),
                     MessageCreator.create_message_template(TEMPLATE_NAME, parameters),
                 )
+            db.session.add(history)
+            db.session.commit()

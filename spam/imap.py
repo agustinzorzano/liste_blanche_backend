@@ -79,6 +79,12 @@ class Imap:
         return email.message_from_string(data[0][1].decode())["from"]
 
     @handle_error
+    def get_subject(self, email_id):
+        """Returns the subject of the email with the id email_id"""
+        typ, data = self.mail.uid("fetch", email_id, "(BODY[HEADER.FIELDS (Subject)])")
+        return email.message_from_string(data[0][1].decode())["subject"]
+
+    @handle_error
     def _search(self, flags, since_date, initial_uid=1):
         """Returns a list with the emails whose uid is greater than initial_uid and were received after the date since_date"""
         # return self.mail.search(None, '({} SINCE {} UID {}:*)'.format(flags, since_date.strftime("%d-%b-%Y"), initial_uid))[1][0].decode().split()

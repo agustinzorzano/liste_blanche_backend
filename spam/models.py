@@ -66,3 +66,18 @@ class Quarantine(db.Model):
         default=db.func.now(),
         nullable=False,
     )
+
+
+class History(db.Model):
+    __tablename__ = "history"
+    id = db.Column(db.Integer, primary_key=True)
+    fk_user = db.Column(db.Integer, db.ForeignKey(User.id, ondelete="RESTRICT"), nullable=False)
+    email_sender = db.Column(db.String(120), nullable=False)
+    email_subject = db.Column(db.String(120), nullable=False)
+    reason = db.Column(db.String(120), nullable=False)
+    created_at = db.Column(
+        db.DateTime,
+        server_default=db.func.now(),
+        default=db.func.now(),
+        nullable=False,
+    )

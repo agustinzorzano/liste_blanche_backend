@@ -77,9 +77,9 @@ class EmailAnalyzer:
             sender = self.mailbox.get_sender(mail)
             sender = sender.strip(">").split("<")[-1]
             history = History(
-                    fk_user=self.user.id,
-                    email_sender=sender,
-                    email_subject=self.mailbox.get_subject(mail),
+                fk_user=self.user.id,
+                email_sender=sender,
+                email_subject=self.mailbox.get_subject(mail),
             )
             if sender in self.white_list:
                 history.reason = "white_list"

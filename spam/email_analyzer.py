@@ -107,6 +107,7 @@ class EmailAnalyzer:
                 history.reason = "quarantine"
                 message = self.mailbox.get_mail(mail)
                 if message.message_id() in emails_in_quarantine:  # TODO: delete this if
+                    history.reason = "restored_email"
                     print("(Provisional) Message already in quarantine")
                     # mailbox.mark_as_unseen(mail)
                     continue

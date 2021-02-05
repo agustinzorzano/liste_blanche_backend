@@ -18,10 +18,14 @@ BASE_PATH = os.environ.get("BASE_PATH")
 TEMPLATE_NAME = "captcha_email.html"
 
 
-def fulfils_expression(mail, expressions):
-    """It returns True if the email address matches one of the regular expressions in the expressions list"""
+def fulfils_expression(mail, email_subject, expressions):
+    """It returns True if one of the regular expressions in the expressions list matches the email address
+    or the email subject"""
     for expression in expressions:
-        if re.fullmatch(expression, mail):
+        check_sentence = mail
+        if expression.expression_type == "email_subject":
+            check_sentence = email_subject
+        if re.fullmatch(expression.expression, check_sentence):
             return True
     return False
 
@@ -32,21 +36,12 @@ class EmailAnalyzer:
         self.smtp_sender = smtp_sender
         self.user = user
 
-        self.whitelist_expressions = (
-            WhiteListRegularExpression.query.filter(WhiteListRegularExpression.fk_user == user.id)
-            .with_entities(WhiteListRegularExpression.expression)
-            .all()
-        )
-        # We keep only the regex expression
-        self.whitelist_expressions = [mail[0] for mail in self.whitelist_expressions]
-
-        self.blacklist_expressions = (
-            BlackListRegularExpression.query.filter(BlackListRegularExpression.fk_user == user.id)
-            .with_entities(BlackListRegularExpression.expression)
-            .all()
-        )
-        # We keep only the regex expression
-        self.blacklist_expressions = [mail[0] for mail in self.blacklist_expressions]
+        self.whitelist_expressions = WhiteListRegularExpression.query.filter(
+            WhiteListRegularExpression.fk_user == user.id
+        ).all()
+        self.blacklist_expressions = BlackListRegularExpression.query.filter(
+            BlackListRegularExpression.fk_user == user.id
+        ).all()
 
         self.white_list = WhiteList.query.filter(WhiteList.fk_user == user.id).all()
         # We keep only the email
@@ -76,10 +71,11 @@ class EmailAnalyzer:
         for mail in mails:
             sender = self.mailbox.get_sender(mail)
             sender = sender.strip(">").split("<")[-1]
+            email_subject = self.mailbox.get_subject(mail)
             history = History(
                 fk_user=self.user.id,
                 email_sender=sender,
-                email_subject=self.mailbox.get_subject(mail),
+                email_subject=email_subject,
             )
             if sender in self.white_list:
                 history.reason = "white_list"
@@ -91,12 +87,12 @@ class EmailAnalyzer:
                 history.reason = "black_list"
                 self.mailbox.delete(mail)
                 print("Deleting")
-            elif fulfils_expression(sender, self.whitelist_expressions):
+            elif fulfils_expression(sender, email_subject, self.whitelist_expressions):
                 history.reason = "white_list_expression"
                 if is_unseen:
                     # We mark the email as unseen since the user has not read it yet
                     self.mailbox.mark_as_unseen(mail)
-            elif fulfils_expression(sender, self.blacklist_expressions):
+            elif fulfils_expression(sender, email_subject, self.blacklist_expressions):
                 # We delete the email
                 history.reason = "black_list_expression"
                 self.mailbox.delete(mail)

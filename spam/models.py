@@ -31,6 +31,7 @@ class WhiteListRegularExpression(db.Model):
     user_expression = db.Column(db.String(120), nullable=False)  # The expression written by the user
     expression = db.Column(db.String(120), nullable=False)  # The regex expression we create from the user expression
     fk_user = db.Column(db.Integer, db.ForeignKey(User.id, ondelete="RESTRICT"), nullable=False)
+    expression_type = db.Column(db.String(120), default="email_address", nullable=False)
 
 
 class BlackList(db.Model):
@@ -46,6 +47,7 @@ class BlackListRegularExpression(db.Model):
     user_expression = db.Column(db.String(120), nullable=False)  # The expression written by the user
     expression = db.Column(db.String(120), nullable=False)  # The regex expression we create from the user expression
     fk_user = db.Column(db.Integer, db.ForeignKey(User.id, ondelete="RESTRICT"), nullable=False)
+    expression_type = db.Column(db.String(120), default="email_address", nullable=False)
 
 
 class Quarantine(db.Model):

@@ -35,7 +35,7 @@ def main():
                 fk_user=user.id,
                 email_sender=mail.email_sender,
                 email_subject=mail.email_subject,
-                reason="deleted_by_expiration"
+                reason="deleted_by_expiration",
             )
             if mail.created_at >= datetime.datetime.fromordinal(limit_date.toordinal()):
                 history.reason = "deleted_by_user"

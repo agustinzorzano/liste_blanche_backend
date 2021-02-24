@@ -5,11 +5,13 @@ from sqlalchemy import text
 class User(db.Model):
     __tablename__ = "user"
     id = db.Column(db.Integer, primary_key=True)
+    token = db.Column(db.String(16), unique=True)
     full_name = db.Column(db.String(120))
     # username = db.Column(db.String(64), index=True, unique=True)
     email = db.Column(db.String(120), index=True, unique=True)
     email_password = db.Column(db.String(512))
-    password = db.Column(db.String(255))
+    password = db.Column(db.String(512))
+    salt = db.Column(db.String(64))
     last_uid_scanned = db.Column(db.Integer, default=0, server_default=text("0"))
     created_at = db.Column(db.DateTime, server_default=db.func.now(), default=db.func.now())
 
@@ -54,6 +56,7 @@ class Quarantine(db.Model):
     __tablename__ = "quarantine"
     # TODO: check the types and sizes
     id = db.Column(db.Integer, primary_key=True)
+    client_id = db.Column(db.String(16), nullable=True)
     fk_user = db.Column(db.Integer, db.ForeignKey(User.id, ondelete="RESTRICT"), nullable=False)
     email_sender = db.Column(db.String(120), nullable=False)
     email_subject = db.Column(db.String(120), nullable=False)

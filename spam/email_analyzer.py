@@ -145,6 +145,7 @@ class EmailAnalyzer:
             email_subject=message.subject(),
             email_size=size,
             email_id=message.message_id(),
+            client_id=self.user.token,
         )
         db.session.add(quarantined_email)
         db.session.commit()

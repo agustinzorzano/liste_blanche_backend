@@ -16,6 +16,7 @@ load_dotenv()
 
 BASE_PATH = os.environ.get("BASE_PATH")
 TEMPLATE_NAME = "captcha_email.html"
+APP_EMAIL = os.environ.get("EMAIL_USER")
 
 
 def fulfils_expression(mail, email_subject, expressions):
@@ -70,7 +71,17 @@ class EmailAnalyzer:
                 email_sender=sender,
                 email_subject=email_subject,
             )
-            if fulfils_expression(sender, email_subject, self.key_words_expressions):
+            if sender == self.user.email:
+                history.reason = "user_email"
+                if is_unseen:
+                    # We mark the email as unseen since the user has not read it yet
+                    self.mailbox.mark_as_unseen(mail)
+            elif sender == APP_EMAIL:
+                history.reason = "app_email"
+                if is_unseen:
+                    # We mark the email as unseen since the user has not read it yet
+                    self.mailbox.mark_as_unseen(mail)
+            elif fulfils_expression(sender, email_subject, self.key_words_expressions):
                 history.reason = "quarantine_keyword"
                 self._save_email_in_quarantine(mail, sender, history)
             elif sender in self.white_list:

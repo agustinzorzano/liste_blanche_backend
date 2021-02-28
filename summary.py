@@ -20,7 +20,12 @@ def main():
     today = datetime.date.today()
     initial_date = today + datetime.timedelta(-1)
     # We get the all emails received since yesterday that are in the quarantine
-    mails = Quarantine.query.filter(Quarantine.fk_user == user.id, Quarantine.created_at >= initial_date).all()
+    mails = Quarantine.query.filter(
+        Quarantine.fk_user == user.id,
+        Quarantine.created_at >= initial_date,
+        Quarantine.to_restore == False,
+        Quarantine.to_eliminate == False,
+    ).all()
     initial_date = initial_date.strftime("%d/%m/%Y %H:%M")
     final_date = today.strftime("%d/%m/%Y %H:%M")
     # TODO: USE a special email for this

@@ -30,18 +30,18 @@ def main():
 
     for mail in emails_to_delete:
         path = os.path.join(BASE_PATH, user.email, mail.email_id + ".eml")
+        history = History(
+            fk_user=user.id,
+            email_sender=mail.email_sender,
+            email_subject=mail.email_subject,
+            reason="deleted_by_expiration",
+        )
+        if mail.to_eliminate:
+            history.reason = "deleted_by_user"
         if os.path.exists(path):
-            history = History(
-                fk_user=user.id,
-                email_sender=mail.email_sender,
-                email_subject=mail.email_subject,
-                reason="deleted_by_expiration",
-            )
-            if mail.created_at >= datetime.datetime.fromordinal(limit_date.toordinal()):
-                history.reason = "deleted_by_user"
             os.remove(path)
-            db.session.add(history)
-            db.session.delete(mail)
+        db.session.add(history)
+        db.session.delete(mail)
     if emails_to_delete:
         db.session.commit()
 

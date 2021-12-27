@@ -207,13 +207,16 @@ class EmailAnalyzer:
         if not os.path.exists(directory_path):
             os.mkdir(directory_path)
 
-        path = os.path.join(directory_path, message.message_id() + ".eml")
+        message_id = message.message_id()
+        if not message_id:
+            message_id = f"{datetime.datetime.now()}"
+        path = os.path.join(directory_path, message_id + ".eml")
 
         # we save the email in the repository
         size = message.save(path)
         print(
             "Message from {} with id {} and size {}, was deleted and saved in {}\n".format(
-                sender, message.message_id(), size, path
+                sender, message_id, size, path
             )
         )
 
@@ -223,7 +226,7 @@ class EmailAnalyzer:
             email_sender=sender,
             email_subject=message.subject(),
             email_size=size,
-            email_id=message.message_id(),
+            email_id=message_id,
             client_id=self.user.token,
         )
         db.session.add(quarantined_email)

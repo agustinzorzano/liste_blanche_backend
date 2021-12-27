@@ -19,6 +19,10 @@ This file is part of OpenEmailAntispam.
 
 import re
 import os
+import datetime
+import jwt
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.backends import default_backend
 from spam import db
 from spam.models import (
     WhiteList,
@@ -48,6 +52,45 @@ def fulfils_expression(mail, email_subject, expressions):
         if re.fullmatch(expression.expression, check_sentence):
             return True
     return False
+
+
+def create_header(sender, receiver):
+    ENCRYPTOR_PRIVATE_KEY_PATH = os.environ.get("ENCRYPTOR_PRIVATE_KEY_PATH")
+    with open(ENCRYPTOR_PRIVATE_KEY_PATH, "rb") as key_file:
+        private_key = serialization.load_pem_private_key(key_file.read(), password=None, backend=default_backend())
+        data = {
+            "sender": sender,
+            "receiver": receiver,
+            "exp": datetime.datetime.now() + datetime.timedelta(minutes=5)
+        }
+        encoded = jwt.encode(data, private_key, algorithm="RS256")
+        return encoded
+
+
+def check_validation_header(message, receiver, sender):
+    ENCRYPTOR_PUBLIC_KEY_PATH = os.environ.get("ENCRYPTOR_PUBLIC_KEY_PATH")
+    with open(ENCRYPTOR_PUBLIC_KEY_PATH, "rb") as key_file:
+        public_key = serialization.load_pem_public_key(key_file.read(), backend=default_backend())
+        try:
+            validation_header = message.get_validation_header()
+            if not validation_header:
+                # The email was not a reply from our service
+                return False
+
+            # We delete the spaces the \n and \r that the email may add to our jwt token
+            validation_header = validation_header.replace(" ", "")
+            validation_header = validation_header.replace("\n", "")
+            validation_header = validation_header.replace("\r", "")
+
+            # We decode the Token
+            data = jwt.decode(validation_header, public_key, algorithms=["RS256"])
+            if data.get("sender", "") == sender and data.get("receiver", "") == receiver:
+                return True
+            return False
+
+        except Exception as e:
+            print(e)
+            return False
 
 
 class EmailAnalyzer:
@@ -153,6 +196,12 @@ class EmailAnalyzer:
             self.mailbox.mark_as_unseen(mail)
             return
 
+        if check_validation_header(message, self.user.email, sender):
+            history.reason = "restored_email"
+            print("(Provisional) Message already in quarantine")
+            self.mailbox.mark_as_unseen(mail)
+            return
+
         directory_path = os.path.join(BASE_PATH, self.user.email)
         # We verify the user has a directory. If he does not have, we create one
         if not os.path.exists(directory_path):
@@ -185,9 +234,11 @@ class EmailAnalyzer:
 
         # we send an email with the captcha
         parameters["VERIFY_URL"] = verify_url.format(quarantined_email.id)
+        header = create_header(self.user.email, sender)
         self.smtp_sender.send_message(
             self.user.email,
             sender,
             "RE: " + message.subject(),
             MessageCreator.create_message_template(TEMPLATE_NAME, parameters),
+            validation_header=header,
         )

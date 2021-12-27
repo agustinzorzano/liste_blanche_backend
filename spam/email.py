@@ -77,3 +77,6 @@ class Email:
     def str(self):
         """Return the email in string format"""
         return str(self.email)
+
+    def get_validation_header(self):
+        return self.email["X-PROJET-LISTE-VALIDATION"]

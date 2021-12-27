@@ -65,7 +65,7 @@ class Email:
     def save(self, path):
         """It saves the email in the path and returns the size of the file"""
         with open(path, "w") as outfile:
-            gen = generator.Generator(outfile)
+            gen = generator.Generator(outfile, maxheaderlen=0)
             gen.flatten(self.email)
             size = outfile.tell()
         return size

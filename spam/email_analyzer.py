@@ -227,7 +227,7 @@ class EmailAnalyzer:
             email_subject=message.subject(),
             email_size=size,
             email_id=message_id,
-            client_id=self.user.token,
+            client_id=None,
         )
         db.session.add(quarantined_email)
         db.session.commit()

@@ -79,4 +79,5 @@ class Email:
         return str(self.email)
 
     def get_validation_header(self):
+        """Returns the content of the header X-PROJET-LISTE-VALIDATION"""
         return self.email["X-PROJET-LISTE-VALIDATION"]

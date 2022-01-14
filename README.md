@@ -114,4 +114,4 @@ Run the container
 
 ### Application installation
 
-To install the whole application follow the steps defined [here](https://docs.google.com/document/d/1P6CKqDxJe5GTNWc5SwhjdMBEWXAH0yXsr4NVk9PYzPw/edit?usp=sharing) 
+To install the whole application follow the steps defined [here](https://docs.google.com/document/d/1GVVPA1v7WNzyi-QkxMUXnvUEigb7-6ikzjbO08q33EI/edit?usp=sharing) 

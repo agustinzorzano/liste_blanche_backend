@@ -43,7 +43,7 @@ def handle_error(function):
     def decorated_function(*args, **kwargs):
         try:
             # We execute the method
-            return function(*args)
+            return function(*args, **kwargs)
         except (
             smtplib.SMTPServerDisconnected,
             smtplib.SMTPResponseException,
@@ -79,11 +79,13 @@ class Smtp:
             raise SmtpError
 
     @handle_error
-    def send_message(self, sender, destination, subject, message):
+    def send_message(self, sender, destination, subject, message, validation_header=""):
         """Sends an email with the subject and message given. The message needs to be an html template"""
         msg = MIMEMultipart()
         msg["From"] = sender
         msg["To"] = destination
         msg["Subject"] = subject
         msg.attach(MIMEText(message, "html"))
+        if validation_header:
+            msg.add_header("X-PROJET-LISTE-VALIDATION", validation_header)
         self.mail.send_message(msg)

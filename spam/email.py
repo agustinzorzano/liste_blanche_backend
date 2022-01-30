@@ -65,7 +65,7 @@ class Email:
     def save(self, path):
         """It saves the email in the path and returns the size of the file"""
         with open(path, "w") as outfile:
-            gen = generator.Generator(outfile)
+            gen = generator.Generator(outfile, maxheaderlen=0)
             gen.flatten(self.email)
             size = outfile.tell()
         return size
@@ -77,3 +77,7 @@ class Email:
     def str(self):
         """Return the email in string format"""
         return str(self.email)
+
+    def get_validation_header(self):
+        """Returns the content of the header X-PROJET-LISTE-VALIDATION"""
+        return self.email["X-PROJET-LISTE-VALIDATION"]

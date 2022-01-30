@@ -25,11 +25,39 @@ from spam.models import Quarantine, History
 from spam.models import User
 from sqlalchemy import or_
 from dotenv import load_dotenv
+from spam.email import Email
+from spam.imap import Imap
+from spam.encryptor import Encryptor
+
 
 load_dotenv()
 
 BASE_PATH = os.environ.get("BASE_PATH")
 EXPIRATION_DAYS = 40
+
+
+def restore_emails(user):
+    """Restores the emails that need to be restored"""
+    if user is None:
+        return
+    password = Encryptor.decrypt(user.email_password)
+    mailbox = Imap(user.email, password)
+    mails_to_restore = Quarantine.query.filter(
+        Quarantine.fk_user == user.id,
+        Quarantine.to_restore == True,
+        Quarantine.was_restored == False,
+    ).all()
+    for mail in mails_to_restore:
+        path = os.path.join(BASE_PATH, user.email, mail.email_id + ".eml")
+        if os.path.exists(path):
+            file = open(path)
+            message = Email(file)
+            mailbox.append(message)
+            file.close()
+            os.remove(path)
+            mail.was_restored = True
+    if mails_to_restore:
+        db.session.commit()
 
 
 def main():
@@ -41,6 +69,9 @@ def main():
     user = User.query.filter(User.email == user_email).first()
     if user is None:
         return
+    # We restore first the possible emails that may have not been restored
+    restore_emails(user)
+
     limit_date = datetime.date.today() - datetime.timedelta(EXPIRATION_DAYS)
     emails_to_delete = Quarantine.query.filter(
         Quarantine.fk_user == user.id,

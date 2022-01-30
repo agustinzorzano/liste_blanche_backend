@@ -1,0 +1,114 @@
+version: "3.8"
+services:
+    mariadb-service:
+        image: linuxserver/mariadb
+        container_name: 'mariadb-service'
+        environment:
+            FILE__MYSQL_ROOT_PASSWORD: /root_password
+            MYSQL_DATABASE: "whitelist"
+            MYSQL_USER: "whitelist"
+            FILE__MYSQL_PASSWORD: /user_password
+            MYSQL_TCP_PORT: 3306
+        ports:
+            - 3307:3306
+        volumes:
+            - maria_database:/config/databases
+        networks:
+            - custom_network
+        secrets:
+            - source: mysql_root_password
+              target: /root_password
+            - source: mysql_user_password
+              target: /user_password
+
+        deploy:
+            mode: replicated
+            replicas: 1
+
+    api_rest:
+        image: api_rest:0.0.1
+        container_name: 'api_rest'
+        build: ./whitelistRest
+        env_file:
+            - ${BASE_PATH}/environment/api_env
+        ports:
+            - 8080:8070
+        depends_on:
+            - mariadb-service
+        secrets:
+            - source: private_key
+              target: /usr/src/app/private.pem
+            - source: public_key
+              target: /usr/src/app/public_key.pem
+        links:
+            - mariadb-service
+        networks:
+            - custom_network
+        deploy:
+            mode: replicated
+            replicas: 1
+
+    frontend:
+        image: frontend:0.0.1
+        container_name: 'frontend'
+        build: ./listeBlancheFrontend
+        ports:
+            - 81:4200
+        environment:
+            PORT: 4200
+        networks:
+            - custom_network
+        deploy:
+            mode: replicated
+            replicas: 1
+
+    backend_api:
+        image: backend_api:0.0.1
+        container_name: 'backend_api'
+        env_file:
+            - ${BASE_PATH}/environment/back_env
+        build: ./liste_blanche_backend
+        ports:
+            - 5000:5000
+        volumes:
+            - emails:/home/project/emails
+        secrets:
+            - source: private_key
+              target: /home/project/private_key.pem
+            - source: public_key
+              target: /home/project/public_key.pem
+        depends_on:
+            - mariadb-service
+        links:
+            - mariadb-service
+        networks:
+            - custom_network
+        deploy:
+            mode: replicated
+            replicas: 1
+
+secrets:
+    private_key:
+        file: ${BASE_PATH}/keys/private_key.pem
+    public_key:
+        file: ${BASE_PATH}/keys/public_key.pem
+    mysql_root_password:
+        file: ${BASE_PATH}/keys/mysql_root_password
+    mysql_user_password:
+        file: ${BASE_PATH}/keys/mysql_user_password
+
+
+volumes:
+    maria_database:
+        driver_opts:
+            type: none
+            device: ${BASE_PATH}/db
+            o: bind
+    emails:
+        driver_opts:
+            type: none
+            device: ${BASE_PATH}/emails
+            o: bind
+
+networks:
+    custom_network:

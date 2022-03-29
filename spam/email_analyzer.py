@@ -61,7 +61,7 @@ def create_header(sender, receiver):
         data = {
             "sender": sender,
             "receiver": receiver,
-            "exp": datetime.datetime.now() + datetime.timedelta(minutes=5)
+            "exp": datetime.datetime.now(tz=datetime.timezone.utc) + datetime.timedelta(minutes=5)
         }
         encoded = jwt.encode(data, private_key, algorithm="RS256")
         return encoded
